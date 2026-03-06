@@ -22,7 +22,10 @@ The compromise of a server machine is modelled by leaking privAK or privLTK.
 (*    agent_keys(ID_S,    privLTK,pubLTK,privAK ,pubAK ,privEK ,pubEK ) *)
 table agent_keys(identity,privkey,pubkey,privkey,pubkey,privkey,pubkey).
 
-let gen_agents_data = 
+(*    trust_store(ID_S    ,pubLTK,server_cert) *)
+table trust_store(identity,pubkey,bitstring).
+
+let gen_agents_data (privCA:privkey) = 
   (* Imagine the following as generating the data of a single server machine (single agent)
   and the replication then produces multiple server machines (multi-agent) *)
 
@@ -41,6 +44,10 @@ let gen_agents_data =
 	let pubAK = pk(privAK) in
 	out(io,pubAK);  
 
+  let server_cert = sign(privCA,(ID_S,pubLTK)) in   (* WebPKI cert = {ID_S,pubLTK_S}CA *)
+  out(io, server_cert);
+  insert trust_store(ID_S,pubLTK,server_cert);
+
 	(!(
     (* This replication allows to model multiple VMs on the same physical machine
     which is typical in cloud scenarios. *)
@@ -52,9 +59,6 @@ let gen_agents_data =
   (* Record in the table *)
   insert agent_keys(ID_S,privLTK,pubLTK,privAK,pubAK,privEK,pubEK)
 
-  (* Compromised keys *)
-  (* Mark the event when the keys of a specific machine are leaked
-  i.e., not all server machines are compromised at the same time *)
   (* Alternative model: start a new phase and check the properties based on phases: attacker (...) phase n *)
   (* phase 1; *)
   (* Comment leakage part *)
@@ -65,7 +69,7 @@ let gen_agents_data =
   ))
 .
 
-let run_Client = 
+let run_Client(pubCA:pubkey) = 
   (* Intuitively, the following models a single client (single agent) 
   and the replication takes care of multiple clients (multi agent) *)
   new ID_C:identity;  (* long-term identity of the client *)
@@ -90,20 +94,15 @@ let run_Server =
   get agent_keys(_,_,_,privAK,pubAK,_,_) in
   get agent_keys(_,_,_,_,_,privEK,pubEK) in  
 
-  (* Evidence generation *)
-  let rdata = hash(StrongHash,p2b(pubEK)) in (* rdata = hash(pubEK) *)
-  (* model of dev_status (measurements): input from adversary *)
-  (* Lets the adversary instantiate any desired VM 
-      but only the one with correct measurements will be accepted at Verifier *)
-  (* Alternative model: generate using new, give to adversary and use tables to store *)
-	in(io, dev_status: bitstring);
-  let dataSign = (rdata,dev_status) in
-  let quote = (dataSign, sign(privAK,dataSign)) in
+  (* retrieve the cert matching the ID *)
+  (* get trust_store(=ID_S,_,server_cert) in *)
 
   (* The following replication models multiple sessions of server with these parameters *)
-  !Server(ID_S,pubLTK,pubAK,privEK,quote,NULL_ID)
+  !Server(ID_S,privLTK,privAK,privEK,NULL_ID)
 .
 
+(* Mark the event when the keys of a specific machine are leaked
+i.e., not all server machines are compromised at the same time *)
 let LEK =
   get agent_keys(_,_,_,_,_,privEK,pubEK) in 
   event LeakedEK(pubEK);  (* mark the leakage of EK *)
@@ -128,8 +127,13 @@ let LLTK =
 (* main system *)
 (* process 0 *)
 process
-  !(gen_agents_data)
-  | !(run_Client) | !(run_Server) 
+  (* Web PKI CA *)
+  new privCA:privkey; 
+  let pubCA = pk(privCA) in 
+  out(io,pubCA);
+
+  !(gen_agents_data(privCA))
+  | !(run_Client(pubCA)) | !(run_Server) 
   | !(LEK)
   | !(LAK)
   | !(LLTK)

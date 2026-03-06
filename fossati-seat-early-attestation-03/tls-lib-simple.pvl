@@ -256,12 +256,13 @@ const StdTLS,aTLS: tls_typ.
 type params.
 fun nego(tls_typ,kex_alg,hash_alg,ev_typ): params [data].
 
-fun CH(random,params):msg [data].  (* ClientHello *)
+fun CH(random,params,random):msg [data].  (* ClientHello *)
 fun SH(random,params):msg [data].  (* ServerHello *)
 (* EncryptedExtensions msg not modelled *)
 (*  CRT(pubEK ,quote    ,selfsign ) *)
 fun CRT(pubkey,bitstring,bitstring):msg [data].  (* Certificate message of TLS *)
 fun CV(bitstring):msg [data].  (* CertificateVerify *)
+fun CV_Ext(bitstring,bitstring):msg [data].  (* Extended CertificateVerify *)
 fun FIN(bitstring):msg [data].  (* Finished *)
 
 (********************************************************)
@@ -477,54 +478,141 @@ query idS, idXS: identity, gxy:bitstring;
  query rdata:bitstring;
       event(AcceptedRdata(rdata)). 
 
+(* should be false (confirms events are reachable) 
+Goal: Events are reachable in the absence of an attacker.
+  An honest execution path for these events exists without any weakness (e.g.,leakage). 
+  Protocol can run without any attacker interference (exclude all weaknesses).
+Formalization: ServerLastEvent && ClientLastEvent ==> All weaknesses
+*)
+query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
+      cr:random, sr:random, cr':random, sr':random,
+      ID:identity,pubLTK:pubkey,pubAK:pubkey,anyAK:pubkey,
+      psk:preSharedKey, e:element,
+      offer:params, mode:params, ID_S:identity,
+      kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
+  (* event(ClientComp(ID_S,pubLTK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state)) && *)
+  (* event(PreServerComp(ID_S,pubLTK,psk,offer,mode,kc,ks,ems,cr,sr,pubEK,dev_state)) ==> *)
+  (* event(ClientFinished(pubEK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) && *)
+  event(ServerFinished(cr,sr,psk,pubLTK,offer,mode,kc,ks,ems,rms)) ==> 
+  event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
+  event(ServerChoosesHash(cr',sr',WeakHash)) ||
+  event(SentBadElement) ||
+  event(LeakedAK(pubAK)) ||
+  event(LeakedEK(pubEK)) ||
+  event(LeakedLTK(pubLTK))
+.
+
 (**********************************************************************)
 (* Secrecy queries *)
 (**********************************************************************)
-(* Property SK: Secrecy of Attestation Key (Sanity check)
-Formalization: see Section 6.4 of ProVerif manual v2.05 (17.11.2023) 
-  See details in issue #106.
+(* Property G-RA3: Secrecy of Attestation Key (Sanity check)
+Goal: The attacker cannot acquire privAK that is used inside the TEE.
+  The protocol does not leak privAK. No execution in the protocol could lead to the attacker 
+  knowing the privAK.
+  If the attacker knows privAK then it must have been leaked before.
+Formalization: see Section 6.4 of ProVerif manual v2.05 (17.11.2023)
   Add ==> to secrecy properties to add conditions/assumptions 
   under which it is true, e.g., to check if there is anything else in protocol 
   other than the intentional leak of AK via LeakedAK. 
-Concepts: based on discussion with Jean-Marie
-  Scope: Free names are globally known, whereas bound names are local to a process. (Manual page 7)
-  Free names = declared by "free n:t" (can only be done outside the process: verified that "free" results in syntax error inside the process.)
-  Bound names = declared by "new n:t" in the process (can only be done inside the process: verified that "new" results in syntax error outside the process.)
+Concepts:
+  Scope: Free names are globally known, whereas bound names are local to a process.
+  Free names = declared by "free n:t" (can only be done outside the process: verified that "free" inside the process results in syntax error.)
+  Bound names = declared by "new n:t" in the process (can only be done inside the process or macro: verified that "new" outside the process or macro results in syntax error.)
   For referring to bound names in the query, use "new n" in the query.
-  What about terms (e.g., pubAK) formed by function application on bound names? 
-    1. Use them with function and new (first query below) or 2. Use these as variables (second query below). The former is closer to what we want.
-  What if two subprocesses (using let) define new n:t? How do we refer to them in queries? 
-    Probably need to use different names, e.g. nA, nB, to distinguish.
-Result: should be true
-Interpretation of result: Sanity check: Protocol by itself does not leak AK. *)
-(* if the attacker knows privAK then it must have been leaked. *)
-(* query
-  attacker(new privAK) ==>
-  event(LeakedAK(pk(new privAK)))
-. *)
-
-(* 
-Alternative using variables 
+  For terms (e.g., pubAK) formed by function application on bound names: 
+    1. Use them with function and new (first query below) or 
+    2. Use these as variables (second query below). 
+    The former is closer to what we want.
+  Two subprocesses (using let) should not define the same bound names: e.g., new n:t,
+    we need to use different names, e.g. nA, nB, to be able to refer to them uniquely in queries.
 Result: should be true
 *)
-(* query pubAK:pubkey;
+query
+  attacker(new privAK) ==>
+  event(LeakedAK(pk(new privAK)))
+.
+
+(* 
+G-RA3b: Alternative using variables 
+Result: should be true
+*)
+query pubAK:pubkey;
   attacker(new privAK) ==>
   event(LeakedAK(pubAK))
-. *)
+.
 
-(* Property ST: Secrecy of TIK 
-Result: should be true
-Interpretation of result: Sanity check: Protocol by itself does not leak EK. *)
-(* query pubAK:pubkey, pubEK:pubkey;
-  attacker(new privEK) 
-  ==>
-  event(LeakedEK(pubEK)) ||
-  event(LeakedAK(pubAK))
-. *)
+(* 
+Goal: The only way an attacker can know privAK used by the client is that some compromise has happened. 
+Formalization:
+  Need for "&& ClientFinished": It binds privAK to the one with which Client has verified 
+  the Evidence and is ready to establish a connection (and not just any random privAK) 
+Result: true
+*)
+query cr:random, sr:random, cr':random, sr':random,
+      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,
+      psk:preSharedKey, p:pubkey, e:element,
+      offer:params, mode:params,
+      kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
+  attacker(new privAK) &&
+  event(ClientFinished(pk(new privAK),psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+  event(LeakedAK(pk(new privAK)))
+.
 
-(* query e:element;
-  attacker (mesg) ==> event(ServerChoosesKEX(DHE_13(WeakDH,e))) ||
-                      event(ServerChoosesKEX(DHE_13(WeakDH,BadElement))). *)
+(* 
+Goal: The only way an attacker can know kc used by the client is that some compromise has happened. 
+Formalization: 
+  Need for "&& ClientFinished": It binds the attacker knows the specific key that the client 
+  has accepted and is going to use in communication. This excludes other time points in the
+  protocol when the handshake has not yet completed. 
+Result: should be false 
+  Fixed in next query
+*)
+query cr:random, sr:random, cr':random, sr':random,
+      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,
+      psk:preSharedKey, p:pubkey, e:element,
+      offer:params, mode:params,
+      kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
+      attacker(kc) &&
+      event(ClientFinished(pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
+      event(ServerChoosesHash(cr',sr',WeakHash)) ||
+      event(SentBadElement) ||
+      event(LeakedAK(pubAK)) ||
+      event(LeakedEK(pubEK))
+.
+
+(* Replace pubAK with anyAK in LeakedAK *)
+(* Result: true *)
+query cr:random, sr:random, cr':random, sr':random,
+      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,anyAK:pubkey,
+      psk:preSharedKey, p:pubkey, e:element,
+      offer:params, mode:params,
+      kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
+      attacker(kc) &&
+      event(ClientFinished(pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
+      event(ServerChoosesHash(cr',sr',WeakHash)) ||
+      event(SentBadElement) ||
+      event(LeakedAK(anyAK)) ||
+      event(LeakedEK(pubEK))
+.
+
+(* With all RA and TLS arguments 
+Result: true *)
+query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
+      cr:random, sr:random, cr':random, sr':random,
+      ID:identity,pubLTK:pubkey,pubAK:pubkey,
+      psk:preSharedKey, e:element,
+      offer:params, mode:params, ID_S:identity,
+      kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
+      attacker(kc) &&
+      event(ClientComp(ID_S,pubLTK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state)) ==>
+      event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
+      event(ServerChoosesHash(cr',sr',WeakHash)) ||
+      event(SentBadElement) ||
+      event(LeakedAK(pubAK)) ||
+      event(LeakedEK(pubEK))
+.
 
 (**********************************************************************)
 (* RA goals: Agreement of attestation parameters (attestation credentials = Evidence here) *)
@@ -660,8 +748,8 @@ query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubLTK:pubkey,p
 
 (* Property G-RA2: Per-session Evidence Freshness (or simply Freshness of Evidence)
 Formalization: G-RA1a with injective events
-Result: false 
-Interpretation of result: Per-session Evidence Freshness is not provided by the protocol 
+Result: true 
+Interpretation of result: Unlike pre-HS, per-session Evidence Freshness is provided by the protocol 
   under the assumption that pubAK is not leaked 
 Note: replay of signData (vs. TEE itself) where ev = sign(privAK, signData)
 Applications: VM-based TEE (OpenHCL); device attestation *)
@@ -674,7 +762,7 @@ query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey;
 (* 
 Goal: Freshness of Evidence under additional assumptions
 Result: true 
-Interpretation of result: Freshness of Evidence requires additional assumptions *)
+Interpretation of result: trivially true since the above with less assumptions is true *)
 query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubLTK:pubkey,pubAK:pubkey,
       cr:random, sr:random, e:element;
       inj-event(ClientRA2(pubAK,pubEK,dev_state)) ==>
@@ -688,7 +776,8 @@ query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubLTK:pubkey,p
 (**********************************************************************)
 (* Auxiliary Properties for G-RA2 *)
 (* Goal: With evidence in parameters
-Result: false *)
+Result: true 
+Interpretation: unlike pre-HS, it holds (stronger security than pre-HS) *)
 query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubLTK:pubkey,pubAK:pubkey,
       cr:random, sr:random, e:element;
       event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
@@ -696,7 +785,8 @@ query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubLTK:pubkey,p
       event(LeakedAK(pubAK)) 
 .
 
-(* Result: true *)
+(* Result: true 
+Interpretation: Holds trivially since the above holds with less assumptions *)
 query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubLTK:pubkey,pubAK:pubkey,
       cr:random, sr:random, e:element;
       inj-event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
@@ -797,9 +887,9 @@ Events: ClientID is placed when Client is ready to establish connection (just be
   ServerID is placed in the beginning of Server process
 Parameters of agreement: gxy is the shared secret to identify the session
 Method: added all possible weaknesses
-Result: should still be false 
+Result: false 
 Interpretation of result: Client is not assured of the (machine) identity of Server. 
-  Diversion attacks are possible.
+  Diversion attacks are avoided.
 Diversion attack: Diverted to different physical machine in different data center.
 Formalization:
   See manual page 54 https://bblanche.gitlabpages.inria.fr/proverif/manual.pdf
@@ -839,10 +929,9 @@ Parameters of agreement: Machine identifier (ID_S) and others described below in
     as defined in appendix F.1 of RFC 8446
   Agreement of pubAK and dev_state is not checked since agreement of TLS parameters.
 Method: added all possible weaknesses
-Result: should still be false 
+Result: false 
 Interpretation of result: Client is not assured of the (machine) identity of Server.
-  The client is not given the guarantee that intended communication partner and session data (parameters of agreement) is authentic. 
-  In other words, Server is not authenticated to the Client. MITM attacks are possible. *)
+*)
 
 (*
 G-TLS2a: Aliveness
@@ -1059,7 +1148,7 @@ query cr:random, sr:random, cr':random, sr':random,
       event(LeakedAK(pubAK))
 .
 
-(* Result: should still be false  *)
+(* Result: true  *)
 query cr:random, sr:random, cr':random, sr':random,
       ID:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
@@ -1089,7 +1178,7 @@ Events: ClientComp is placed when Client is ready to establish connection (just 
         PreServerComp is placed just before sending ServerFinished
 Parameters of agreement: Combines the parameters of agreement from RA property (G-RA) and TLS property (G-TLS)
 Method: added all assumptions of RA property (G-RA) and TLS property (G-TLS) 
-Result: should still be false
+Result: false
 Interpretation of result: Cryptographic binding of RA and TLS protocols is weak. 
 *)
 query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
@@ -1122,10 +1211,11 @@ let Client(ID_C:identity,ID_S:identity,pubLTK:pubkey,pubAK:pubkey) =
   let (x:bitstring, gx:element) = dh_keygen(g) in
   (* (x,gx) returned by dh_keygen for a given group g and freshly generated x; see def. above in the same file *)
   let offer = nego(aTLS,DHE_13(g,gx),hash_algo,ev_type) in
-  (* Note: Do we really need DHE_13(g,gx)? Yes *)
+  (* Note that we really need DHE_13(g,gx) *)
 
   new cr:random;  (* random nonce: ClientHello.random; 8446bis page 10 *)
-  let ch = CH(cr,offer) in
+  new ar:random;  (* random nonce for attestation *)
+  let ch = CH(cr,offer,ar) in
   let psk = NoPSK in (* non-PSK handshake, so use NoPSK to get zero. *)
   let (es:bitstring,kb:mac_key,kc0:ae_key,ems0:bitstring) = kdf_es(psk,msg2bytes(ch)) in  (* non-PSK handshake, so use NoPSK to get zero. log1 is simply ch *)
   (* If a given secret is not available, then the 0-value consisting of a string of Hash.length bytes set to zeros is used.
@@ -1142,12 +1232,10 @@ let Client(ID_C:identity,ID_S:identity,pubLTK:pubkey,pubAK:pubkey) =
   let gxy = e2b(dh_exp(g,gy,x)) in  (* represents (EC)DHE in Key Derivation [Sec. 7.1, RFC8446] *)
   let (hs:bitstring,kch:ae_key,ksh:ae_key,kcm:mac_key,ksm:mac_key) = kdf_hs(es,gxy,log_SH) in
   in(io,CRT(pubEK,quote,selfsign));  (* receive Certificate message *)
-  (* get attKeys(sn,xk,=pubAK) in  Search for a LTK matching public key = pubAK (received in cert msg) in the database. sn and xk are not further used *)
-  (* if verify(pubEK,(pubEK,quote),selfsign) = true then  check signatures on self-signed certificate *)
-  (* let (rdata:bitstring, sig:bitstring) = quote in  (* check quote format *)
-  if verify(pubAK,rdata,sig) = true then  (* check signatures on Quote *)   *)
+
   let (dataSign:bitstring, sig:bitstring) = quote in  (* check quote format *)
-	let (rdata:bitstring,dev_status1:bitstring) = dataSign in  (* check dataSign format *)
+	let (ar_rec:random,rdata:bitstring,dev_status1:bitstring) = dataSign in  (* check dataSign format *)
+  if ar_rec = ar then  (* check attestation nonce *)
   if verify(pubAK,dataSign,sig) = true then  (* check signatures on Quote *)
   if dev_status1 = dev_statusRef then  (*check measurements against Ref. Values *)
   if rdata = hash(hash_algo,p2b(pubEK)) then  (* compare hashes *)
@@ -1204,10 +1292,10 @@ let Client(ID_C:identity,ID_S:identity,pubLTK:pubkey,pubAK:pubkey) =
 (* Server *)
 (********************************************************)
 
-let Server(ID_S:identity, pubLTK: pubkey, pubAK: pubkey, privEK: privkey, quote:bitstring,ID_C:identity) =
+let Server(ID_S:identity, privLTK: privkey, privAK: privkey, privEK: privkey,ID_C:identity) =
 (
   in(io, ch:msg); (* Receive ClientHello message from Client and store in variable ch *)
-  let CH(cr,offer) = ch in (* pattern matching to ensure that received message in variable ch is in the desired format fun CH(random,params):msg [data]. nonce will be stored in variable cr and parameters will be stored in variable offer *)
+  let CH(cr,offer,ar) = ch in (* pattern matching to ensure that received message in variable ch is in the desired format fun CH(random,params,random):msg [data]. nonce will be stored in variable cr and parameters will be stored in variable offer. Attestation nonce will be stored in ar *)
   let nego(=aTLS,DHE_13(g,gx),xhash_algo,xev_type) = offer in (* pattern matching to ensure that received message in variable offer is in the desired format fun nego(tls_typ,kex_alg,hash_alg,ev_typ): params [data]. *)
   let psk = NoPSK in (* non-PSK handshake, so use NoPSK to get zero. *)
   let (es:bitstring,kb:mac_key,kc0:ae_key,ems0:bitstring) = kdf_es(psk,msg2bytes(ch)) in  (* non-PSK handshake, so use NoPSK to get zero. log1 is simply ch *)
@@ -1230,15 +1318,22 @@ let Server(ID_S:identity, pubLTK: pubkey, pubAK: pubkey, privEK: privkey, quote:
   let gxy = e2b(dh_exp(g,gx,y)) in  (* represents (EC)DHE in Key Derivation [Sec. 7.1, RFC8446] *)
   let (hs:bitstring,kch:ae_key,ksh:ae_key,kcm:mac_key,ksm:mac_key) = kdf_hs(es,gxy,log_SH) in
 
-  (* get ephKeys(dn,privEK,pubEK) in  table attKeys(prin,privkey,pubkey). dn is never used afterwards *)
-  (* get attKeys(sn,privAK,pubAK) in  table attKeys(prin,privkey,pubkey). sn is never used afterwards. *)
   let pubEK = pk(privEK) in
+  let pubLTK = pk(privLTK) in
+  let pubAK = pk(privAK) in
   event ServerID(ID_S,gxy);
-  (* let selfsign = zero in *)
+
+  (* Evidence generation *)
+  let rdata = hash(StrongHash,p2b(pubEK)) in (* rdata = hash(pubEK) *)
+  (* model of dev_status (measurements): input from adversary *)
+  (* Lets the adversary instantiate any desired VM 
+      but only the one with correct measurements will be accepted at Verifier *)
+  (* Alternative model: generate using new, give to adversary and use tables to store *)
+	in(io, dev_status1: bitstring);
+  let dataSign = (ar,rdata,dev_status1) in
+  let quote = (dataSign, sign(privAK,dataSign)) in
   let selfsign = sign(privEK,(pubEK,quote)) in
-  (* let (rdata:bitstring, sig:bitstring) = quote in  check quote format   *)
-  let (dataSign:bitstring, sig:bitstring) = quote in  (* check quote format *)
-	let (rdata:bitstring,dev_status1:bitstring) = dataSign in  (* check dataSign format *)
+
   event Conveyed(log_SH);
   event Sent(quote);
   event SentWithPubEK(quote,pubEK);
@@ -1250,7 +1345,7 @@ let Server(ID_S:identity, pubLTK: pubkey, pubAK: pubkey, privEK: privkey, quote:
   let log_CRT = (log_SH,CRT(pubEK,quote,selfsign)) in  (* received ClientHello || sent ServerHello || sent Certificate *)
 
   (* CertificateVerify message *)
-  let sg = sign(privEK,hash(hash_algo,log_CRT)) in  (* A signature over the value Transcript-Hash(Handshake Context, Certificate) [Sec. 4.4, RFC8446] using LTK; Handshake Context via first row of table in Sec. 4.4 of RFC8446. log_CRT contains Handshake Context, Certificate. *)
+  let sg     = sign(privEK ,hash(hash_algo,log_CRT)) in  (* A signature over the value Transcript-Hash(Handshake Context, Certificate) [Sec. 4.4, RFC8446] using LTK; Handshake Context via first row of table in Sec. 4.4 of RFC8446. log_CRT contains Handshake Context, Certificate. *)
   out(io,CV(sg));  (* Send CertificateVerify message *)
   let log_CV = (log_CRT,CV(sg)) in  (* received ClientHello || sent ServerHello || sent Certificate || sent CertificateVerify *)
 

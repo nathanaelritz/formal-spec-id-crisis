@@ -2,7 +2,7 @@
 
 ProVerif model for [draft-fossati-seat-early-attestation-03](https://datatracker.ietf.org/doc/draft-fossati-seat-early-attestation/), adapted from the [TLS-a](https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main/TLS-a) model by Sardar, Moustafa, and Aura.
 
-This model is intended as a faithful formalization of the Early Attestation binder mechanism, with minimal changes beyond those required to encode the draft.
+This model is intended as a faithful formalization of the Early Attestation binder mechanism, with minimal changes beyond those required to encode the draft. It is a work in progress and has not been independently peer-reviewed.
 
 ## What this model proves
 
@@ -38,5 +38,13 @@ The third result (false) confirms the boundary is not vacuous.
 | Adversary-chosen measurements | yes | yes |
 | Multi-agent topology | yes | yes |
 
+## Running the model
 
 Expected runtime is approx 5 minutes on Apple M2 with 16 GB of memory.
+
+For Docker setup and build instructions, see the [root README](../../README.md).
+
+```bash
+docker run --rm -v "$(pwd)":/work proverif205 \
+  -lib work/tls-lib-simple.pvl -html work/traces work/tls13-multiagent.pv 2>&1 | tee log.txt
+```

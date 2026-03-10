@@ -1,132 +1,147 @@
-# Formal analysis of attested TLS protocols
+# Formal Analysis of Attested TLS Protocols
 
-Sardar and collaborators provided a formal proof of insecurity of two protocols using state-of-the-art tool [ProVerif](https://ieeexplore.ieee.org/document/9833653) and released the models to the open source community, dubbed "Identity Crisis in Confidential Computing". This specific work is a unique adaptation and extension, developed apart from the original academic model released under the Apache 2.0 license: [https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main](https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main)
+Sardar and collaborators provided a formal proof of insecurity of two protocols using the state-of-the-art tool [ProVerif](https://ieeexplore.ieee.org/document/9833653) and released their models to the open-source community, dubbed "Identity Crisis in Confidential Computing". This specific work is a unique adaptation and extension, developed apart from the original academic model released under the Apache 2.0 license: [https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main](https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main)
 
-This repository contains further formalizations of other intra-handshake attestation proposals demonstrating mitigation of the disclosed attacks.
+This repository contains further formalizations of other intra-handshake attestation proposals demonstrating mitigation of the disclosed attacks. The models for `fossati-seat-early-attestation-03` and `ritz-seat-facts` are works in progress and have not been independently peer-reviewed.
 
-## Main results
+## Main Results
 
-- Intel's RA-TLS/Interoperable RA-TLS is vulnerable to replay attacks.
-- Intel's RA-TLS/Interoperable RA-TLS and draft-fossati-tls-attestation are both vulnerable to diversion attacks.
-- *Formalization of a cryptographic binder in fossati-seat-early-attestation-03 [Early] demonstrates mitigation of both replay and diversion attacks.
+- Intel's RA-TLS / Interoperable RA-TLS is vulnerable to replay attacks.
+- Intel's RA-TLS / Interoperable RA-TLS and draft-fossati-tls-attestation are both vulnerable to diversion attacks.
+- fossati-seat-early-attestation-03 [*Early*] demonstrates mitigation of both replay and diversion attacks through the formalization of a new cryptographic binder.
+- ritz-seat-facts [*FACTS*] adds a new KEM keypair and HPKE that introduces a third independent factor required to compromise a connection.
 
-| Property                   	       | IRA-TLS| TLS-a | *Early |
-| :--                		             | :--    | :--   | :-- |
-| G-RA1: Integrity of Evidence       | ✅     | ✅    |✅    | 
-| G-RA2: Freshness of Evidence       | ❌     | ✅    |✅    |
-| G-RA3: Secrecy of Attestation Keys | ✅     | ✅    |✅    |
-| G-TLS1: Server Identity            | ❌     | ❌    |✅    |
-| G-TLS2: Server Authentication      | ❌     | ❌    |✅    |
-| G-C1: Compound Authentication      | ❌     | ❌    |✅    |
-| G-C2: Agreement of All Parameters  | ❌     | ❌    |✅    |
+| Property                           | IRA-TLS| TLS-a | *Early* | *FACTS* |
+| :--                                | :--    | :--   | :--    | :--   |
+| G-RA1: Integrity of Evidence       | ✅     | ✅    | ✅    | ✅   | 
+| G-RA2: Freshness of Evidence       | ❌     | ✅    | ✅    | ✅   |
+| G-RA3: Secrecy of Attestation Keys | ✅     | ✅    | ✅    | ✅   |
+| G-TLS1: Server Identity            | ❌     | ❌    | ✅    | ✅   |
+| G-TLS2: Server Authentication      | ❌     | ❌    | ✅    | ✅   |
+| G-C1: Compound Authentication      | ❌     | ❌    | ✅    | ✅   |
+| G-C2: Agreement of All Parameters  | ❌     | ❌    | ✅    | ✅   |
 
 
-## Tool 
+## Artifacts Organization
+- Folder `fossati-seat-early-attestation-03` contains the model for the newly proposed I-D for the TLS-attest protocol with mitigations against replay and diversion attacks.
+- Folder `ritz-seat-facts` contains the model for the FACTS I-D, operating as a superset of `fossati-seat-early-attestation-03` with modularized queries and a third key factor.
+- Folder `TLS-a` contains code for the original TLS-attest standard candidate.
+- Folder `TLS-a/fix` contains code for a proposed fix for the TLS-attest standard candidate.
+
+## Tool
 ### Installing ProVerif
-Install the latest version (2.05 at the moment) of ProVerif: see https://bblanche.gitlabpages.inria.fr/proverif/ for details.
-See Section 1.4 of [manual](https://bblanche.gitlabpages.inria.fr/proverif/manual.pdf) for installation options:
-- via OPAM: Section 1.4.1
-- from sources: Section 1.4.2
-- from binaries: Section 1.4.3 
+Install the latest version (2.05 at the time of writing) of ProVerif: see https://bblanche.gitlabpages.inria.fr/proverif/ for details.
+See Section 1.4 of the [manual](https://bblanche.gitlabpages.inria.fr/proverif/manual.pdf) for installation options:
+- Via OPAM: Section 1.4.1
+- From sources: Section 1.4.2
+- From binaries: Section 1.4.3
 
-## Artifacts organization
-- Folder `fossati-seat-early-attestation-03` contains code for newly proposed I-D for TLS-attest protocol with mitigations against replay and diversion attacks.
-- Folder `TLS-a` contains code for original TLS-attest standard candidate.
-- Folder `TLS-a/fix` contains code for proposed fix for TLS-attest standard candidate.
-
-```text
-formal-spec-id-crisis/
-│
-├── README.md                          # README file
-│
-│
-├─ fossati-seat-early-attestation-03/  # Newly proposed I-D for TLS-attest protocol with cryptographic binder
-│     ├── tls-lib-simple.pvl           # ProVerif library file
-│     ├── tls13-multiagent.pv          # ProVerif main file
-│     ├── README.md                    # Folder-specific README.md outlining specific changes implemented to the original formalization
-│ 
-├── TLS-a/                             # Original TLS-attest protocol (draft-fossati-tls-attestation)
-      ├── tls-lib-simple.pvl           # ProVerif library file
-      ├── tls13-multiagent.pv          # ProVerif main file
-      │
-      ├── fix/                         # Proposed fix by original academic authors for TLS-attest protocol (draft-fossati-tls-attestation)
-           ├── tls-lib-simple.pvl      # ProVerif library file
-           ├── tls13-multiagent.pv     # ProVerif main file
-```
-
-## Running automatic proofs 
+## Running Automatic Proofs
 
 ### Basic Execution
-Run as follows: 
+Run as follows:
 
-```bash 
+```bash
 proverif -lib tls-lib-simple.pvl tls13-multiagent.pv
 ```
 
-### Generation of traces for failing properties
-In order to additionally generate a trace for each property which results in "false", create a subfolder (e.g., `traces` in the following command) for results before executing.
+### Generating Traces for Failing Properties
+In order to additionally generate a trace for each property which results in "false", create a subfolder (e.g., `traces` in the following command) for results before executing:
 
-```bash 
+```bash
 mkdir traces
 ```
 
-Then to execute: run as follows:
-```bash 
+Then execute:
+
+```bash
 proverif -lib tls-lib-simple.pvl -graph traces tls13-multiagent.pv
 ```
 
-OR 
-```bash 
+OR
+
+```bash
 proverif -lib tls-lib-simple.pvl -html traces tls13-multiagent.pv
 ```
 
-Subfolder `traces` will contain the traces in .dot as well as .PDF.
+Subfolder `traces` will contain the traces in .dot as well as .pdf format.
 
-### Saving log
-To additionally save in log file together with display:
+### Saving the Log
+To additionally save output to a log file together with display:
+
 ```bash
 proverif -lib tls-lib-simple.pvl -html traces tls13-multiagent.pv 2>&1 | tee log.txt
 ```
 
-### Horn clauses
-To additionally see the Horn clauses generated in ProVerif: 
+### Horn Clauses
+To additionally see the Horn clauses generated by ProVerif:
 
-a. use command-line option `-test` as follows: 
+a. Use command-line option `-test`:
 ```bash
 proverif -lib tls-lib-simple.pvl tls13-multiagent.pv -test
 ```
 
-OR 
+OR
 
-b. add one of the following two settings inside the input (*.pv) file:
+b. Add one of the following two settings inside the input (*.pv) file:
 
 - `set verboseClauses = short.` to display the Horn clauses
+- `set verboseClauses = explained.` to additionally display a sentence after each clause explaining where it comes from.
 
-- `set verboseClauses = explained.` to additionally display a sentence after each clause it generates to explain where this clause comes from.
-
-### Interactive mode
+### Interactive Mode
 To run in interactive mode:
 ```bash
 proverif_interact -lib tls-lib-simple.pvl tls13-multiagent.pv
 ```
 
-<!---
-#❓
---->
+## Using Docker
 
-## Original Artifacts author
+Docker is provided as an alternative execution environment and is the recommended approach for the FACTS model, which uses concurrent partitioned runs. ProVerif models can take a considerable amount of time to run; Docker allows multiple instances to be run simultaneously across independent containers.
+
+### Dockerfile.proverif
+```Dockerfile
+# --- Stage 1: The Builder ---
+# Use the large development image to build the tool
+FROM ocaml/opam:debian-11-ocaml-4.14 AS builder
+# Install all necessary build-time dependencies
+RUN sudo apt-get update && sudo apt-get install -y m4 pkg-config libgtk2.0-dev
+# Install the full proverif package
+# Installs Proverif 2.05 as of Sept. 24, 2025
+RUN opam update && opam install proverif
+# --- Stage 2: The Final Image ---
+# Start from a minimal, clean Debian image
+FROM debian:11-slim
+# Copy only the compiled ProVerif program from the builder stage.
+COPY --from=builder /home/opam/.opam/4.14/bin/proverif /usr/local/bin/proverif
+# Set the final entrypoint
+ENTRYPOINT ["proverif"]
+```
+
+### Build
+```sh
+docker build -f Dockerfile.proverif -t proverif205 .
+```
+
+This is a two-stage build. The first stage compiles ProVerif 2.05 from OPAM inside a full OCaml toolchain image; the second copies only the resulting binary into a minimal Debian 11 slim image.
+
+### Usage
+The container's entrypoint is `proverif` itself. Mount your current working directory as `/work` inside the container and pass arguments directly after the image name. HTML traces appear in `./traces/` and verdicts in `log.txt`. See each model's README for partition-specific run commands.
+
+---
+
+## Original Artifacts Author
 Muhammad Usama Sardar (contact: muhammad_usama.sardar at tu-dresden.de)
 
 ## Pre-print
-Preprint is available [here](https://www.researchgate.net/publication/398839141_Identity_Crisis_in_Confidential_Computing_Formal_Analysis_of_Attested_TLS).
+A preprint of the original work is available [here](https://www.researchgate.net/publication/398839141_Identity_Crisis_in_Confidential_Computing_Formal_Analysis_of_Attested_TLS).
 
 ## Scientific Publication
-The work is accepted for publication at AsiaCCS and should be cited as follows: 
+The original academic work has been accepted for publication at AsiaCCS and should be cited as follows: 
 
 > Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura. 2026.
 Identity Crisis in Confidential Computing: Formal Analysis of Attested
 TLS. In ACM Asia Conference on Computer and Communications Security
-(ASIA CCS ’26), June 1–5, 2026, Bangalore, India. ACM, New York, NY, USA,
+(ASIA CCS '26), June 1–5, 2026, Bangalore, India. ACM, New York, NY, USA,
 14 pages. https://doi.org/10.1145/3779208.3785387
 
 BibTeX:
@@ -155,5 +170,4 @@ year = {2026}
 - Jonathan Hoyland
 - Richard Barnes
 
-Several others at the IETF, IRTF and CCC have contributed by providing feedback.
-
+Several others at the IETF, IRTF, and CCC have contributed by providing feedback.

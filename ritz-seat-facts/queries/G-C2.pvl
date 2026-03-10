@@ -1,0 +1,98 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+    This work is a unique adaptation and extension, developed apart from the original
+    academic model released under the Apache 2.0 license: 
+
+    https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main
+*)
+
+(**********************************************************************)
+(* G-C2: Compound injective agreement                                 *)
+(*
+  Agreement over all RA and TLS parameters simultaneously:
+  (ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state).
+
+  The three-key threshold: agreement holds as long as any single key
+  is uncompromised. The bare query is the falsification boundary,
+  confirming that simultaneous compromise of all three breaks the bound.
+*)
+(**********************************************************************)
+
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)) ==>
+  inj-event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state)) ||
+  event(LeakedTIK(pubTIK))
+.
+
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)) ==>
+  inj-event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state)) ||
+  event(LeakedKEM(pubKEM))
+.
+
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)) ==>
+  inj-event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state)) ||
+  event(LeakedAK(pubAK))
+.
+
+(*
+  Falsification boundary — expected false.
+  With all three keys simultaneously compromised, no single anchor
+  remains to enforce correspondence. This confirms the model is not
+  vacuous: the proof structure genuinely depends on key integrity.
+*)
+query ID_S:identity, pubTIK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)) ==>
+  inj-event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state))
+.
+
+(***********************************************************************
+ * G-C2 WithAK: Compound injective agreement with session-specific AK  *
+ ***********************************************************************)
+
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientCompWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)) ==>
+  inj-event(PreServerCompWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* G-C2 WithAK: falsification boundary — expected false *)
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientCompWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)) ==>
+  inj-event(PreServerCompWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state))
+.

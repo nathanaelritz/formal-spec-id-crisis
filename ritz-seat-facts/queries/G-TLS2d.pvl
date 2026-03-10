@@ -1,0 +1,148 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+    This work is a unique adaptation and extension, developed apart from the original
+    academic model released under the Apache 2.0 license: 
+
+    https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main
+*)
+
+
+
+(**********************************************************************)
+(* G-TLS2d: Recent one-way injective agreement                        *)
+(*
+  Strongest non-compound TLS agreement. Non-injective and non-recent
+  variants hold trivially from this and are omitted.
+*)
+(**********************************************************************)
+
+query ID_S:identity, pubTIK:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinRecent1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr)) ==>
+  inj-event(PreServerFinRecent1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr)) ||
+  event(LeakedTIK(pubTIK))
+.
+
+query ID_S:identity, pubTIK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinRecent1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr)) ==>
+  inj-event(PreServerFinRecent1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr)) ||
+  event(LeakedKEM(pubKEM))
+.
+
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinRecent1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr)) ==>
+  inj-event(PreServerFinRecent1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* Falsification boundary — expected false. *)
+query ID_S:identity, pubTIK:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinRecent1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr)) ==>
+  inj-event(PreServerFinRecent1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr))
+.
+
+(***********************************************************************
+ * G-TLS2d WithAK: Recent one-way injective agreement with            *
+ * session-specific AK                                                 *
+ ***********************************************************************)
+
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinRecent1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr)) ==>
+  inj-event(PreServerFinRecent1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, cr, sr)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* G-TLS2d WithAK: falsification boundary — expected false *)
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinRecent1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr)) ==>
+  inj-event(PreServerFinRecent1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, cr, sr))
+.
+
+(***********************************************************************
+ * G-TLS2b/c WithAK: Non-recent agreement with session-specific AK    *
+ ***********************************************************************)
+
+(* ClientFin1WayAgr WithAK: non-injective *)
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey,
+      psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  event(ClientFin1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, rms)) ==>
+  event(PreServerFin1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* ClientFin1WayAgr WithAK: injective *)
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey,
+      psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFin1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, rms)) ==>
+  inj-event(PreServerFin1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* ClientFin1WayAgr WithAK: falsification boundary — expected false *)
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey,
+      psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFin1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, rms)) ==>
+  inj-event(PreServerFin1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems))
+.
+
+(***********************************************************************
+ * G-TLS2d WithKEM: Recent one-way injective agreement with           *
+ * session-specific KEM                                                *
+ ***********************************************************************)
+
+query ID_S:identity, pubTIK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinRecent1WayAgrWithKEM(ID_S, pubTIK, pubKEM, psk, offer, mode, kc, ks, ems, rms, cr, sr)) ==>
+  inj-event(PreServerFinRecent1WayAgrWithKEM(ID_S, pubTIK, pubKEM, psk, offer, mode, kc, ks, ems, cr, sr)) ||
+  event(LeakedKEM(pubKEM))
+.
+
+(* G-TLS2d WithKEM: falsification boundary — expected false *)
+query ID_S:identity, pubTIK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinRecent1WayAgrWithKEM(ID_S, pubTIK, pubKEM, psk, offer, mode, kc, ks, ems, rms, cr, sr)) ==>
+  inj-event(PreServerFinRecent1WayAgrWithKEM(ID_S, pubTIK, pubKEM, psk, offer, mode, kc, ks, ems, cr, sr))
+.

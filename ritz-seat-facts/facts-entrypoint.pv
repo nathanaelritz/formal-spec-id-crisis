@@ -1,0 +1,300 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+    This work is a unique adaptation and extension, developed apart from the original
+    academic model released under the Apache 2.0 license: 
+
+    https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main
+*)
+
+(* Attacker mode *)
+set attacker = active.
+
+(*
+
+Run as follows with subfolder <traces>:
+
+# Debug (only run queries from the entrypoint.pv file):
+rm -R ./traces; mkdir -p ./traces;
+time docker run --rm -v "$(pwd)":/work proverif205 \
+  -lib work/tls-lib-simple-queryless.pvl \
+  -lib work/facts-lib.pvl \
+  -lib work/facts-handshake.pvl \
+  -lib work/queries/lemmas.pvl \
+  -html work/traces work/facts-entrypoint.pv 2>&1 | tee log.txt
+
+# All FACTS Queries (sequential, single container):
+rm -R ./traces; mkdir -p ./traces;
+time docker run --rm -v "$(pwd)":/work proverif205 \
+  -lib work/tls-lib-simple-queryless.pvl \
+  -lib work/facts-lib.pvl \
+  -lib work/facts-handshake.pvl \
+  -lib work/queries/lemmas.pvl \
+  -lib work/queries/key-leaks.pvl \
+  -lib work/queries/key-secrecy.pvl \
+  -lib work/queries/traffic-key-secrecy.pvl \
+  -lib work/queries/G-TLS1.pvl \
+  -lib work/queries/G-TLS2a.pvl \
+  -lib work/queries/G-TLS2d.pvl \
+  -lib work/queries/G-CA1.pvl \
+  -lib work/queries/G-C2.pvl \
+  -lib work/queries/G-RA.pvl \
+  -lib work/queries/eku-compound.pvl \
+  -html work/traces work/facts-entrypoint.pv 2>&1 | tee log.txt
+
+# 3-way split for concurrent container runs
+rm -R ./traces/tls; mkdir -p ./traces/tls;
+time docker run --rm -v "$(pwd)":/work proverif205 \
+  -lib work/tls-lib-simple-queryless.pvl \
+  -lib work/facts-lib.pvl \
+  -lib work/facts-handshake.pvl \
+  -lib work/queries/lemmas.pvl \
+  -lib work/queries/key-leaks.pvl \
+  -lib work/queries/key-secrecy.pvl \
+  -lib work/queries/traffic-key-secrecy.pvl \
+  -lib work/queries/G-TLS1.pvl \
+  -lib work/queries/G-TLS2a.pvl \
+  -lib work/queries/G-TLS2d.pvl \
+  -html work/traces/tls work/facts-entrypoint.pv 2>&1 | tee tls-log.txt
+
+rm -R ./traces/ra; mkdir -p ./traces/ra;
+time docker run --rm -v "$(pwd)":/work proverif205 \
+  -lib work/tls-lib-simple-queryless.pvl \
+  -lib work/facts-lib.pvl \
+  -lib work/facts-handshake.pvl \
+  -lib work/queries/lemmas.pvl \
+  -lib work/queries/key-leaks.pvl \
+  -lib work/queries/G-CA1.pvl \
+  -lib work/queries/G-C2.pvl \
+  -lib work/queries/G-RA.pvl \
+  -html work/traces/ra work/facts-entrypoint.pv 2>&1 | tee ra-log.txt
+
+rm -R ./traces/eku; mkdir -p ./traces/eku;
+time docker run --rm -v "$(pwd)":/work proverif205 \
+  -lib work/tls-lib-simple-queryless.pvl \
+  -lib work/facts-lib.pvl \
+  -lib work/facts-handshake.pvl \
+  -lib work/queries/lemmas.pvl \
+  -lib work/queries/key-leaks.pvl \
+  -lib work/queries/eku-compound.pvl \
+  -html work/traces/eku work/facts-entrypoint.pv 2>&1 | tee eku-log.txt
+
+###
+
+Summary: 
+  Server's identity: ID_S associated with pubTIK
+  General organization for modeling: (ID_S,pubTIK,pubAK)
+
+  To guarantee per-connection freshness, this protocol derives a unique "Attestation Binder" 
+  directly from the current TLS handshake transcript, which inherently includes freshly 
+  generated random nonces from both the client and server. 
+  
+  The Trusted Execution Environment (TEE) then includes and signs this specific binder 
+  within its attestation Evidence, cryptographically proving the security metrics are 
+  tied to this exact, real-time connection and preventing any replay of older sessions.
+
+Details:
+  Each server machine is identified by ID_S.
+  The model allows multiple tenants (guest VM) per server machine. 
+
+We want to model that some server machines may be compromised while others remain secure.
+The compromise of a server machine is modelled by leaking privAK or privTIK.
+*)
+
+let gen_agents_data (privCA:privkey) = 
+  (* Imagine the following as generating the data of a single server machine (single agent)
+  and the replication then produces multiple server machines (multi-agent) *)
+
+  new privAK: privkey;  (* attestation key for signing evidence *)
+
+  let pubAK = pk(privAK) in
+  out(io,pubAK);  
+
+  (!(
+    (* This replication allows to model multiple VMs on the same physical machine
+    which is typical in cloud scenarios. *)
+
+    (* Server side *)
+    new ID_S:identity;  (* long-term identity of the server, e.g., FQDN *)
+    out(io,ID_S);  (* Identity is public *)
+
+    new privTIK: privkey;  (* VM key for TLS *)
+    let pubTIK = pk(privTIK) in
+    out(io,pubTIK);
+
+    (* They also get their own encapsulation KEM *)
+    new privKEM:privkey;
+    let pubKEM = pk(privKEM) in
+    out(io, pubKEM);
+
+    (* Self-sign/Attest to CA for signed identity document *)
+
+    let server_cert = sign(privCA,(ID_S,pubTIK,pubKEM)) in
+    out(io, server_cert);
+    insert trust_store(ID_S,pubTIK,pubKEM,server_cert);
+
+    let identity_doc = (ID_S, pubTIK, pubKEM) in
+    let id_doc_sig = sign(privCA, identity_doc) in
+    
+    (* Publish J/CWT for client pre-handshake lookup.
+       Adversary can observe and attempt substitution; client verifies with pubCA. *)
+    out(untrusted_dns, (identity_doc, id_doc_sig));
+
+    (* Record in the table *)
+    insert agent_keys(ID_S,privTIK,pubTIK,privKEM,pubKEM,privAK,pubAK)
+  ))
+.
+
+let run_Client(pubCA:pubkey) = 
+  (* Intuitively, the following models a single client (single agent) 
+  and the replication takes care of multiple clients (multi agent) *)
+  new ID_C:identity;  (* long-term identity of the client *)
+
+  (* Choose a server machine (potentially a compromised one) to communicate with. *)
+  (! (* this allows the same client to talk to different servers *)
+  (
+  (* ID_S (=hostname/FQDN/SAN) is known to the client, e.g., the desired website it wants to connect. *)
+  get agent_keys(ID_S,_,_,_,_,_,_) in
+  get agent_keys(_,_,_,_,_,_,pubAK) in
+
+  (* ── Pre-handshake: fetch and verify server CA cert ── *)
+  in(untrusted_dns, (identity_doc:bitstring, id_doc_sig:bitstring));
+  let (=ID_S, pubTIK_S:pubkey, pubKEM_S:pubkey) = identity_doc in
+  if verify(pubCA, identity_doc, id_doc_sig) = true then
+    (* The following replication models multiple sessions of client with these parameters *)
+    !FactsClient(ID_C, ID_S, pubTIK_S, pubKEM_S, pubAK, pubCA)
+  ))
+.
+
+let run_Server(pubCA:pubkey) = 
+  (* Intuitively, this models a single server and the replication takes care of multiple servers *)
+  (* Allow several combinations, but for each private key, choose the corresponding public key *)
+  get agent_keys(ID_S,_,_,_,_,_,_) in
+  get agent_keys(_,privTIK,pubTIK,_,_,_,_) in
+  get agent_keys(_,_,_,privKEM,pubKEM,_,_) in
+  get agent_keys(_,_,_,_,_,privAK,pubAK) in
+
+  (* retrieve the cert matching the ID *)
+  get trust_store(=ID_S,_,_,server_cert) in
+
+  (* The following replication models multiple sessions of server with these parameters *)
+  !(FactsServer(ID_S, privTIK, privKEM, privAK, server_cert))
+.
+
+(* Mark the event when the keys of a specific machine are leaked
+i.e., not all server machines are compromised at the same time *)
+let LAK =
+  get agent_keys(ID_S,_,pubTIK,_,pubKEM,privAK,pubAK) in
+
+  (* 0 Parameters: Generalized leakage *)
+  event LeakedAK(pubAK);
+
+  (* 3 Parameters: Full specific context *)
+  event LeakedAK2(ID_S, pubTIK, pubKEM, pubAK);
+
+  (* 2 Parameters: Pairs *)
+  event LeakedAK_ID_TIK(ID_S, pubTIK, pubAK);
+  event LeakedAK_ID_KEM(ID_S, pubKEM, pubAK);
+  event LeakedAK_TIK_KEM(pubTIK, pubKEM, pubAK);
+
+  (* 1 Parameter: Singles *)
+  event LeakedAK_ID(ID_S, pubAK);
+  event LeakedAK_TIK(pubTIK, pubAK);
+  event LeakedAK_KEM(pubKEM, pubAK);
+
+  out(io, privAK)
+.
+
+let LTIK =
+  get agent_keys(_,privTIK,pubTIK,_,_,_,_) in
+  event LeakedTIK(pubTIK);  (* mark the leakage of TIK *)  
+  out(io, privTIK)
+.
+
+let LKEM =
+  get agent_keys(_,_,_,privKEM,pubKEM,_,_) in
+  event LeakedKEM(pubKEM);  (* mark the leakage of KEM *)  
+  out(io, privKEM)
+.
+
+(* ~==================================================~ *)
+(* Topology                                             *)
+(* ~==================================================~ 
+
+              Infrastructure Topology
+ .----------------------------------------------.
+ |                                              |
+ |  .--------------------.  .-----------------. |
+ |  | Machine 1 (ID_HW1) |  |    (ID_HW2)     | |
+ |  |                    |  |                 | |
+ |  | +------+ +------+  |  | +------+        | |
+ |  | |ID_S1 | |ID_S2 |  |  | |ID_S n|  ...   | |
+ |  | |prTIK | |prTIK |  |  | |prTIK |        | |
+ |  | +------+ +------+  |  | +------+        | |
+ |  |                    |  |                 | |
+ |  '---------+----------'  '---------+-------' |
+ |            ^                       ^         |
+ |            | shared                | shared  |
+ |            |                       |         |
+ |        .-----------------------------.       |
+ |        |     Manufacturer/CSP A      |       |
+ |        |          privAK_A           |       |
+ |        '-----------------------------'       |
+ |                                              |
+ |            .------------------------.        |
+ |            |   Manufacturer/CSP B   |        |
+ |       +----|                        |        |
+ |       |    |        privAK_B        |        |
+ |       v    '------------------------'        |
+ |    .--+----------------------------------.   |
+ |    |        Machine n (ID_HWn)           |   |
+ |    |                                     |   |
+ |    | +------+ +------+ +------+          |   |
+ |    | |ID_S3 | |ID_S4 | |ID_S n|  ...     |   |
+ |    | |prTIK | |prTIK | |prTIK |          |   |
+ |    | +------+ +------+ +------+          |   |
+ |    '-------------------------------------'   |
+ '----------------------------------------------'
+
+ Following from the initiation and assumptions from the
+  original Identity Crisis model, a bank of server blades
+  sharing the same manufacturer will share the
+  same trusted private key (AK). Each unique CVM/Tenant has 
+  it's own unique Identity Key (TIK). 
+
+*)
+
+(* set traceDisplay = long. Display full trace *)
+(* set verboseClauses = short. *)
+(* main system *)
+(* process 0 *)
+process
+  (* Web PKI CA *)
+  new privCA:privkey; 
+  let pubCA = pk(privCA) in 
+  out(io,pubCA);
+
+  !(gen_agents_data(privCA))
+  | !(run_Client(pubCA)) | !(run_Server(pubCA)) 
+(* *)
+  | !(LAK)
+  | !(LTIK)
+  | !(LKEM)
+  | !(SendBadElement) 
+(* *)
+

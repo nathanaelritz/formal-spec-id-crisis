@@ -1,0 +1,89 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+    This work is a unique adaptation and extension, developed apart from the original
+    academic model released under the Apache 2.0 license: 
+
+    https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main
+*)
+
+
+
+(**********************************************************************)
+(* G-TLS2a: Aliveness                                                 *)
+(*
+  The client completing a handshake guarantees the server was alive,
+  conditioned on any single key remaining uncompromised.
+*)
+(**********************************************************************)
+
+query ID_S:identity, pubTIK:pubkey;
+  event(ClientFinishedAliveness(ID_S)) ==>
+  event(PreServerFinishedAliveness(ID_S)) ||
+  event(LeakedTIK(pubTIK))
+.
+
+query ID_S:identity, pubKEM:pubkey;
+  event(ClientFinishedAliveness(ID_S)) ==>
+  event(PreServerFinishedAliveness(ID_S)) ||
+  event(LeakedKEM(pubKEM))
+.
+
+query ID_S:identity, pubAK:pubkey;
+  event(ClientFinishedAliveness(ID_S)) ==>
+  event(PreServerFinishedAliveness(ID_S)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* Falsification boundary — expected false. *)
+query ID_S:identity;
+  event(ClientFinishedAliveness(ID_S)) ==>
+  event(PreServerFinishedAliveness(ID_S))
+.
+
+(***********************************************************************
+ * G-TLS2a WithAK: Aliveness with session-specific AK binding         *
+ ***********************************************************************)
+
+query ID_S:identity, pubAK:pubkey;
+  event(ClientFinishedAlivenessWithAK(ID_S, pubAK)) ==>
+  event(PreServerFinishedAlivenessWithAK(ID_S, pubAK)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* G-TLS2a WithAK: falsification boundary — expected false *)
+query ID_S:identity, pubAK:pubkey;
+  event(ClientFinishedAlivenessWithAK(ID_S, pubAK)) ==>
+  event(PreServerFinishedAlivenessWithAK(ID_S, pubAK))
+.
+
+(***********************************************************************
+ * G-TLS2a WithKEM: Aliveness with session-specific KEM binding       *
+ ***********************************************************************)
+
+query ID_S:identity, pubKEM:pubkey;
+  event(ClientFinishedAlivenessWithKEM(ID_S, pubKEM)) ==>
+  event(PreServerFinishedAlivenessWithKEM(ID_S, pubKEM)) ||
+  event(LeakedKEM(pubKEM))
+.
+
+(* G-TLS2a WithKEM: falsification boundary — expected false *)
+query ID_S:identity, pubKEM:pubkey;
+  event(ClientFinishedAlivenessWithKEM(ID_S, pubKEM)) ==>
+  event(PreServerFinishedAlivenessWithKEM(ID_S, pubKEM))
+.

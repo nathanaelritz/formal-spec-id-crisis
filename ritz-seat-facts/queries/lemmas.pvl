@@ -1,0 +1,67 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+    This work is a unique adaptation and extension, developed apart from the original
+    academic model released under the Apache 2.0 license: 
+
+    https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main
+*)
+
+
+(**********************************************************************)
+(* Lemmas                                                             *)
+(**********************************************************************)
+
+(*
+  Secrecy of attest_psk depends on KEM.
+  CN1 is sealed to pubKEM_S under HPKE; the only way to recover it is
+  with privKEM_S. If the attacker holds attest_psk, they must hold privKEM.
+*)
+
+lemma attest_psk:bitstring, pubKEM:pubkey, privKEM:privkey;
+  event(ClientDerivesPSK(attest_psk, pubKEM)) && attacker(attest_psk) ==> attacker(privKEM).
+
+(*
+  Link KEM private key knowledge to the LeakedKEM event.
+  Ensures secrecy queries involving LeakedKEM are non-vacuous.
+*)
+lemma pubKEM:pubkey;
+  attacker(new privKEM) ==> event(LeakedKEM(pubKEM)).
+
+(*
+  Repeat for AK and TIK while we are at it.
+*)
+
+(*
+  privAK secrecy.
+  The attestation signing key never leaves the TEE except via the explicit
+  compromise branch.
+  Result: true.
+*)
+lemma pubAK:pubkey;
+  attacker(new privAK) ==> event(LeakedAK(pubAK)).
+
+(*
+  privTIK secrecy.
+  The TLS Identity Key signs CertificateVerify; its compromise is the
+  sole condition under which TLS identity binding fails.
+  Result: true.
+*)
+lemma pubTIK:pubkey;
+  attacker(new privTIK) ==> event(LeakedTIK(pubTIK)).
+

@@ -1,0 +1,259 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+    This work is a unique adaptation and extension, developed apart from the original
+    academic model released under the Apache 2.0 license: 
+
+    https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main
+*)
+
+(* ~==================================================================~
+   eku-compound.pvl — Key and message secrecy for EKU-rotated keys,
+   plus compound correspondence for post-rotation application traffic.
+
+   Threat model: adversary controls privAK and privTIK; privKEM intact.
+
+   Canary stages:
+     PreRdata   — keyed under hs  (DH only; no attestation dependency)
+     PostRdata  — keyed under ems (DH + KEM-sealed rdata check must pass)
+     PreEku     — keyed under ems (same epoch; confirms no widening before EKU)
+     PostEku    — keyed under eku_sts (DH + attest_psk injection)
+
+   attest_psk = derive_psk_attest(CN1, CN2)
+   CN1 = hpkeSeal(challengeNonce, aad, pubKEM_S)    — RFC 9180 sect. 5
+   CN2 = hpkeSeal(challengeNonce2, aad, pubKEM_C)   — RFC 9180 sect. 5
+   eku_sts = HKDF-Extract(ms, attest_psk)           — FACTS sect. 7.1
+   ~==================================================================~ *)
+
+(**********************************************************************)
+(* Reachability sanity checks — expected false (events are reachable) *)
+(**********************************************************************)
+
+query canary:bitstring, hs:bitstring;
+  event(PreRdataCanary(canary, hs)).
+
+query canary:bitstring, ems:bitstring;
+  event(PostRdataCanary(canary, ems)).
+
+query canary:bitstring, ems:bitstring;
+  event(PreEkuCanary(canary, ems)).
+
+query canary:bitstring, eku_sts:bitstring, 
+pubAK:pubkey, pubTIK:pubkey, pubKEM:pubkey;
+  event(PostEkuCanary(canary, eku_sts, pubAK, pubTIK, pubKEM)).
+
+query cr:random, sr:random,
+      psk:preSharedKey, pubTIK:pubkey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  event(ClientFinished(pubTIK, psk, cr, sr, offer, mode, kc, ks, ems, rms)).
+
+query cr:random, sr:random,
+      psk:preSharedKey, pubTIK:pubkey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  event(ServerFinished(cr, sr, psk, pubTIK, offer, mode, kc, ks, ems, rms)).
+
+query rdata:bitstring;
+  event(AcceptedRdata(rdata)).
+
+query ID_S:identity, pubTIK:pubkey, pubKEM:pubkey, dev_state:bitstring,
+      cr:random, sr:random, psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)).
+
+query ID_S:identity, pubTIK:pubkey, pubKEM:pubkey, dev_state:bitstring,
+      cr:random, sr:random, psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring;
+  event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state)).
+
+query ID_S:identity, app_data:bitstring, eku_key:bitstring, attest_psk:bitstring,
+      cr:random, sr:random;
+  event(ServerSendsAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)).
+
+query ID_S:identity, app_data:bitstring, eku_key:bitstring, attest_psk:bitstring,
+      cr:random, sr:random;
+  event(ClientReceivesAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)).
+
+query attest_psk:bitstring, pubKEM:pubkey;
+  event(ClientDerivesPSK(attest_psk, pubKEM)).
+
+
+(******************************************************************
+ PreRdata canary (keyed under hs)
+   hs = HKDF-Extract(Derive-Secret(es,"derived",""), gxy)
+   hs depends on DH only — RFC 8446 sect. 7.1
+   KEM, AK, and TIK compromise add no protection from attack surface here.
+******************************************************************)
+
+(* Should be false if privTIK is leaked *)
+query canary:bitstring, hs:bitstring, pubKEM:pubkey;
+  attacker(hs) &&
+  event(PreRdataCanary(canary, hs)) ==>
+  event(LeakedKEM(pubKEM))
+.
+
+(*******************************************************************
+  PostRdata canary (keyed under ems)
+   ems = Derive-Secret(ms, "exp master", log_SFIN) — RFC 8446 s7.1
+   PostRdata fires only after client verifies:
+     AK signature on evidence (verify(pubAK, dataSign, sig))
+     rdata = hash(s_attest_binder, CN1, CN2)
+   CN1 sealed to pubKEM_S; attacker without privKEM cannot open CN1
+   and therefore cannot produce a matching rdata.
+ ******************************************************************)
+
+(* Should be true *)
+query canary:bitstring, ems:bitstring, pubKEM:pubkey;
+  attacker(ems) &&
+  event(PostRdataCanary(canary, ems)) ==>
+  event(LeakedKEM(pubKEM))
+.
+
+(* Sanity check: should be false if all keys are leaked *)
+query canary:bitstring, ems:bitstring, pubKEM:pubkey;
+  attacker(ems) &&
+  event(PostRdataCanary(canary, ems))
+.
+
+(********************************************************************
+  PostEku canary (keyed under eku_sts)
+      combined_ikm = combine_dh_psk(eku_gxy, attest_psk)
+      main_secret_n1_s = hkdf_extract(ms, combined_ikm)
+      eku_sts = Derive(HKDF-Extract(main_secret_n1_s, attest_psk),
+              tls13_eku_s_ap_traffic, eku_log)     — FACTS sect. 7.1
+      attest_psk = derive_psk_attest(CN1, CN2)
+*********************************************************************)
+
+(* Results: True if eku_gxy exists and privAK is uncompromised *)
+query canary:bitstring, eku_sts:bitstring, 
+pubAK:pubkey, pubTIK:pubkey, pubKEM:pubkey;
+  attacker(eku_sts) &&
+  event(PostEkuCanary(canary, eku_sts, pubAK, pubTIK, pubKEM)) ==>
+  event(LeakedAK(pubAK))
+.
+
+(* Results: True if eku_gxy exists and pubTIK is uncompromised *)
+query canary:bitstring, eku_sts:bitstring, 
+pubAK:pubkey, pubTIK:pubkey, pubKEM:pubkey;
+  attacker(eku_sts) &&
+  event(PostEkuCanary(canary, eku_sts, pubAK, pubTIK, pubKEM)) ==>
+  event(LeakedTIK(pubTIK))
+.
+
+(* Results: True if eku_gxy exists and pubKEM is uncompromised *)
+query canary:bitstring, eku_sts:bitstring, 
+pubAK:pubkey, pubTIK:pubkey, pubKEM:pubkey;
+  attacker(eku_sts) &&
+  event(PostEkuCanary(canary, eku_sts, pubAK, pubTIK, pubKEM)) ==>
+  event(LeakedKEM(pubKEM))
+.
+
+(* Results: false if all keys are compromised *)
+query canary:bitstring, eku_sts:bitstring, 
+pubAK:pubkey, pubTIK:pubkey, pubKEM:pubkey;
+  attacker(eku_sts) &&
+  event(PostEkuCanary(canary, eku_sts, pubAK, pubTIK, pubKEM))
+.
+
+(* Does attacker have access to eku_sts if honest client and server share secret if pubKEM didn't leak? *)
+query ID_S:identity, pubTIK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring,
+      app_data:bitstring, eku_sts:bitstring, attest_psk:bitstring;
+  event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)) &&
+  event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state)) &&
+  event(ClientReceivesAppData(ID_S, app_data, eku_sts, attest_psk, cr, sr)) &&
+  attacker(eku_sts) ==> event(LeakedKEM(pubKEM))
+.
+
+(* prove leakedKEM event is possible if ClientReceivesAppData included in events  *)
+query ID_S:identity, pubTIK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring,
+      app_data:bitstring, eku_sts:bitstring, attest_psk:bitstring;
+  event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)) &&
+  event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state)) &&
+  event(ClientReceivesAppData(ID_S, app_data, eku_sts, attest_psk, cr, sr)) &&
+  event(LeakedKEM(pubKEM))
+.
+
+(**********************************************************************)
+(* EKU compound: post-rotation application injective agreement        *)
+(* Expected: true *)
+(**********************************************************************)
+
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring,
+      app_data:bitstring, eku_key:bitstring, attest_psk:bitstring;
+  inj-event(ClientReceivesAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)) &&
+  inj-event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state))
+    ==>
+  inj-event(ServerSendsAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)) &&
+  inj-event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state))
+    ||
+  event(LeakedAK(pubAK))
+.
+
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring,
+      app_data:bitstring, eku_key:bitstring, attest_psk:bitstring;
+  inj-event(ClientReceivesAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)) &&
+  inj-event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state))
+    ==>
+  inj-event(ServerSendsAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)) &&
+  inj-event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state))
+    ||
+  event(LeakedTIK(pubTIK))
+.
+
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring,
+      app_data:bitstring, eku_key:bitstring, attest_psk:bitstring;
+  inj-event(ClientReceivesAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)) &&
+  inj-event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state))
+    ==>
+  inj-event(ServerSendsAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)) &&
+  inj-event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state))
+    ||
+  event(LeakedKEM(pubKEM))
+.
+
+(* Sanity check: should not return true *)
+query ID_S:identity, pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey,
+      psk:preSharedKey, cr:random, sr:random,
+      offer:params, mode:params, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring,
+      app_data:bitstring, eku_key:bitstring, attest_psk:bitstring;
+  inj-event(ClientReceivesAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)) &&
+  inj-event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state))
+    ==>
+  inj-event(ServerSendsAppData(ID_S, app_data, eku_key, attest_psk, cr, sr)) &&
+  inj-event(PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_state))
+.
+

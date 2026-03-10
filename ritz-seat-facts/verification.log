@@ -1,0 +1,156 @@
+docker run --rm -v "$(pwd)":/work proverif205 -lib work/tls-lib-simple-queryless.pvl -lib work/facts-lib.pvl -lib work/facts-handshake.pvl -lib work/queries/lemmas.pvl -lib work/queries/key-leaks.pvl -lib work/queries/key-secrecy.pvl -lib work/queries/traffic-key-secrecy.pvl -lib work/queries/G-TLS1.pvl -lib work/queries/G-TLS2a.pvl -lib work/queries/G-TLS2d.pvl -html work/traces/tls work/facts-entrypoint.pv 2>&1 | tee tls-log.txt
+
+Verification summary:
+
+Query(ies):
+ - Query not event(LeakedAK(pubAK_5)) is false.
+ - Query not event(LeakedTIK(pubTIK_5)) is false.
+ - Query not event(LeakedKEM(pubKEM_5)) is false.
+ - Query attacker(privAK[!1 = v_70]) ==> event(LeakedAK(pk(privAK[!1 = v_71]))) is true.
+ - Query attacker(privAK[!1 = v_70]) ==> event(LeakedAK(pubAK_5)) is true.
+ - Query event(ClientFinished(pubTIK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) && attacker(privAK[!1 = v_70]) ==> event(LeakedAK(pk(privAK[!1 = v_71]))) is true.
+ - Query attacker(privTIK[!2 = v_70,!1 = v_71]) ==> event(LeakedTIK(pk(privTIK[!2 = v_72,!1 = v_73]))) is true.
+ - Query attacker(privTIK[!2 = v_70,!1 = v_71]) ==> event(LeakedTIK(pubTIK_5)) is true.
+ - Query event(ClientFinished(pk(privTIK[!2 = v_70,!1 = v_71]),psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) && attacker(privTIK[!2 = v_72,!1 = v_73]) ==> event(LeakedTIK(pk(privTIK[!2 = v_74,!1 = v_75]))) is true.
+ - Query attacker(privKEM[!2 = v_70,!1 = v_71]) ==> event(LeakedKEM(pk(privKEM[!2 = v_72,!1 = v_73]))) is true.
+ - Query attacker(privKEM[!2 = v_70,!1 = v_71]) ==> event(LeakedKEM(pubKEM_5)) is true.
+ - Query event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) && attacker(privKEM[!2 = v_70,!1 = v_71]) ==> event(LeakedKEM(pk(privKEM[!2 = v_72,!1 = v_73]))) is true.
+ - Query event(ClientFinishedWithAK(pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) && attacker(kc_4) ==> event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientFinishedWithAK(pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithAK(pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientFinishedWithAK(pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithAK(pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) is false.
+ - Query event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) && attacker(kc_4) ==> event(LeakedTIK(pubTIK_5)) is true.
+ - Query event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) && attacker(kc_4) ==> event(LeakedKEM(pubKEM_5)) is true.
+ - Query event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) && attacker(kc_4) ==> event(LeakedAK(pubAK_5)) is true.
+ - Query not (event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) && attacker(kc_4)) is false.
+ - Query event(ClientCompWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) && attacker(kc_4) ==> event(LeakedAK(pubAK_5)) is true.
+ - Query event(ServerID(idS,gxy_2)) && event(ClientID(idXS,gxy_2)) ==> idS = idXS is true.
+ - Query not event(ServerID(idS,gxy_2)) is false.
+ - Query not event(ClientID(idXS,gxy_2)) is false.
+ - Query not (event(ServerID(idS,gxy_2)) && event(ClientID(idXS,gxy_2))) is false.
+ - Query event(ClientFinishedAliveness(ID_S_4)) ==> event(PreServerFinishedAliveness(ID_S_4)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query event(ClientFinishedAliveness(ID_S_4)) ==> event(PreServerFinishedAliveness(ID_S_4)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query event(ClientFinishedAliveness(ID_S_4)) ==> event(PreServerFinishedAliveness(ID_S_4)) || event(LeakedAK(pubAK_5)) is true.
+ - Query event(ClientFinishedAliveness(ID_S_4)) ==> event(PreServerFinishedAliveness(ID_S_4)) is false.
+ - Query event(ClientFinishedAlivenessWithAK(ID_S_4,pubAK_5)) ==> event(PreServerFinishedAlivenessWithAK(ID_S_4,pubAK_5)) || event(LeakedAK(pubAK_5)) is true.
+ - Query event(ClientFinishedAlivenessWithAK(ID_S_4,pubAK_5)) ==> event(PreServerFinishedAlivenessWithAK(ID_S_4,pubAK_5)) is false.
+ - Query event(ClientFinishedAlivenessWithKEM(ID_S_4,pubKEM_5)) ==> event(PreServerFinishedAlivenessWithKEM(ID_S_4,pubKEM_5)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query event(ClientFinishedAlivenessWithKEM(ID_S_4,pubKEM_5)) ==> event(PreServerFinishedAlivenessWithKEM(ID_S_4,pubKEM_5)) is false.
+ - Query inj-event(ClientFinRecent1WayAgr(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgr(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query inj-event(ClientFinRecent1WayAgr(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgr(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query inj-event(ClientFinRecent1WayAgr(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgr(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientFinRecent1WayAgr(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgr(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) is false.
+ - Query inj-event(ClientFinRecent1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientFinRecent1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) is false.
+ - Query event(ClientFin1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> event(PreServerFin1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientFin1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFin1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientFin1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFin1WayAgrWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4)) is false.
+ - Query inj-event(ClientFinRecent1WayAgrWithKEM(ID_S_4,pubTIK_5,pubKEM_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgrWithKEM(ID_S_4,pubTIK_5,pubKEM_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query inj-event(ClientFinRecent1WayAgrWithKEM(ID_S_4,pubTIK_5,pubKEM_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgrWithKEM(ID_S_4,pubTIK_5,pubKEM_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) is false.
+Associated lemma(s):
+ - Lemma event(ClientDerivesPSK(attest_psk_2,pubKEM_5)) && attacker(attest_psk_2) ==> attacker(privKEM_3) is true in process 1.
+ - Lemma attacker(privKEM[!2 = v_70,!1 = v_71]) ==> event(LeakedKEM(pubKEM_5)) is true in process 1.
+ - Lemma attacker(privAK[!1 = v_70]) ==> event(LeakedAK(pubAK_5)) is true in process 1.
+ - Lemma attacker(privTIK[!2 = v_70,!1 = v_71]) ==> event(LeakedTIK(pubTIK_5)) is true in process 1.
+
+1:35:48.35 total
+--------------------------------------------------------------
+
+---
+docker run --rm -v "$(pwd)":/work proverif205 -lib work/tls-lib-simple-queryless.pvl -lib work/facts-lib.pvl -lib work/facts-handshake.pvl -lib work/queries/lemmas.pvl -lib work/queries/key-leaks.pvl -lib work/queries/G-CA1.pvl -lib work/queries/G-C2.pvl -lib work/queries/G-RA.pvl -html work/traces/ra work/facts-entrypoint.pv 2>&1 | tee ra-log.txt
+
+Verification summary:
+
+Query(ies):
+ - Query not event(LeakedAK(pubAK_5)) is false.
+ - Query not event(LeakedTIK(pubTIK_5)) is false.
+ - Query not event(LeakedKEM(pubKEM_5)) is false.
+ - Query inj-event(ClientFinishedWithID(ID,pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithID(ID,pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query inj-event(ClientFinishedWithID(ID,pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithID(ID,pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query inj-event(ClientFinishedWithID(ID,pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithID(ID,pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientFinishedWithID(ID,pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithID(ID,pubTIK_5,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) is false.
+ - Query inj-event(ClientFinishedWithIDWithKEM(ID,pubTIK_5,pubAK_5,pubKEM_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithIDWithKEM(ID,pubTIK_5,pubAK_5,pubKEM_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query inj-event(ClientFinishedWithIDWithKEM(ID,pubTIK_5,pubAK_5,pubKEM_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithIDWithKEM(ID,pubTIK_5,pubAK_5,pubKEM_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) is false.
+ - Query inj-event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query inj-event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query inj-event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) is false.
+ - Query inj-event(ClientCompWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> inj-event(PreServerCompWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientCompWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> inj-event(PreServerCompWithAK(ID_S_4,pubTIK_5,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) is false.
+ - Query inj-event(ClientRA2(pubAK_5,pubTIK_5,dev_state)) ==> inj-event(ServerRA2(pubAK_5,pubTIK_5,dev_state)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query inj-event(ClientRA2(pubAK_5,pubTIK_5,dev_state)) ==> inj-event(ServerRA2(pubAK_5,pubTIK_5,dev_state)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query inj-event(ClientRA2(pubAK_5,pubTIK_5,dev_state)) ==> inj-event(ServerRA2(pubAK_5,pubTIK_5,dev_state)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientRA2(pubAK_5,pubTIK_5,dev_state)) ==> inj-event(ServerRA2(pubAK_5,pubTIK_5,dev_state)) is false.
+ - Query inj-event(Accepted(ev)) ==> inj-event(Sent(ev)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(Accepted(ev)) ==> inj-event(Sent(ev)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query inj-event(AcceptedWithPubTIK(ev,pubTIK_5)) ==> inj-event(SentWithPubTIK(ev,pubTIK_5)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(AcceptedWithPubTIK(ev,pubTIK_5)) ==> inj-event(SentWithPubTIK(ev,pubTIK_5)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query inj-event(AcceptedRdata(dev_state)) ==> inj-event(SentRdata(dev_state)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(AcceptedRdata(dev_state)) ==> inj-event(SentRdata(dev_state)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query inj-event(ClientConn(ev)) ==> inj-event(Sent(ev)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientConn(ev)) ==> inj-event(Sent(ev)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query event(ClientRANew(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) ==> event(ServerRA(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) || event(LeakedAK2(ID,pubTIK_5,pubKEM_5,pubAK_5)) is false.
+ - Query event(ClientRANew(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) ==> event(ServerRA(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) || event(LeakedAK(pubAK_5)) is true.
+ - Query event(ClientRANew(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) ==> event(ServerRA(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query event(ClientRANew(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) ==> event(ServerRA(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query event(ClientRANew(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) ==> event(ServerRA(ID,pubTIK_5,pubAK_5,pubKEM_5,dev_state,ev)) is false.
+ - Query inj-event(AcceptedWithAK(ev,pubAK_5)) ==> inj-event(Sent(ev)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(AcceptedWithAK(ev,pubAK_5)) ==> inj-event(Sent(ev)) is false.
+ - Query inj-event(AcceptedWithPubTIKWithAK(ev,pubTIK_5,pubAK_5)) ==> inj-event(SentWithPubTIK(ev,pubTIK_5)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(AcceptedWithPubTIKWithAK(ev,pubTIK_5,pubAK_5)) ==> inj-event(SentWithPubTIK(ev,pubTIK_5)) is false.
+ - Query inj-event(AcceptedRdataWithAK(dev_state,pubAK_5)) ==> inj-event(SentRdata(dev_state)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(AcceptedRdataWithAK(dev_state,pubAK_5)) ==> inj-event(SentRdata(dev_state)) is false.
+ - Query inj-event(ClientConnWithAK(ev,pubAK_5)) ==> inj-event(Sent(ev)) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientConnWithAK(ev,pubAK_5)) ==> inj-event(Sent(ev)) is false.
+ - Query inj-event(ClientRA2WithKEM(pubAK_5,pubTIK_5,pubKEM_5,dev_state)) ==> inj-event(ServerRA2WithKEM(pubAK_5,pubTIK_5,pubKEM_5,dev_state)) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query inj-event(ClientRA2WithKEM(pubAK_5,pubTIK_5,pubKEM_5,dev_state)) ==> inj-event(ServerRA2WithKEM(pubAK_5,pubTIK_5,pubKEM_5,dev_state)) is false.
+Associated lemma(s):
+ - Lemma event(ClientDerivesPSK(attest_psk_2,pubKEM_5)) && attacker(attest_psk_2) ==> attacker(privKEM_3) is true in process 1.
+ - Lemma attacker(privKEM[!2 = v_70,!1 = v_71]) ==> event(LeakedKEM(pubKEM_5)) is true in process 1.
+ - Lemma attacker(privAK[!1 = v_70]) ==> event(LeakedAK(pubAK_5)) is true in process 1.
+ - Lemma attacker(privTIK[!2 = v_70,!1 = v_71]) ==> event(LeakedTIK(pubTIK_5)) is true in process 1.
+
+1:35:16.47 total
+--------------------------------------------------------------
+
+---
+docker run --rm -v "$(pwd)":/work proverif205 -lib work/tls-lib-simple-queryless.pvl -lib work/facts-lib.pvl -lib work/facts-handshake.pvl -lib work/queries/lemmas.pvl -lib work/queries/key-leaks.pvl -lib work/queries/eku-compound.pvl -html work/traces/eku work/facts-entrypoint.pv 2>&1 | tee eku-log.txt
+
+Verification summary:
+
+Query(ies):
+ - Query not event(LeakedAK(pubAK_5)) is false.
+ - Query not event(LeakedTIK(pubTIK_5)) is false.
+ - Query not event(LeakedKEM(pubKEM_5)) is false.
+ - Query not event(PreRdataCanary(canary,hs_4)) is false.
+ - Query not event(PostRdataCanary(canary,ems_4)) is false.
+ - Query not event(PreEkuCanary(canary,ems_4)) is false.
+ - Query not event(PostEkuCanary(canary,eku_sts,pubAK_5,pubTIK_5,pubKEM_5)) is false.
+ - Query not event(ClientFinished(pubTIK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) is false.
+ - Query not event(ServerFinished(cr_2,sr_2,psk_2,pubTIK_5,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) is false.
+ - Query not event(AcceptedRdata(rdata_1)) is false.
+ - Query not event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) is false.
+ - Query not event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) is false.
+ - Query not event(ServerSendsAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) is false.
+ - Query not event(ClientReceivesAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) is false.
+ - Query not event(ClientDerivesPSK(attest_psk_2,pubKEM_5)) is false.
+ - Query event(PreRdataCanary(canary,hs_4)) && attacker(hs_4) ==> event(LeakedKEM(pubKEM_5)) is false.
+ - Query event(PostRdataCanary(canary,ems_4)) && attacker(ems_4) ==> event(LeakedKEM(pubKEM_5)) is true.
+ - Query not (event(PostRdataCanary(canary,ems_4)) && attacker(ems_4)) is false.
+ - Query event(PostEkuCanary(canary,eku_sts,pubAK_5,pubTIK_5,pubKEM_5)) && attacker(eku_sts) ==> event(LeakedAK(pubAK_5)) is true.
+ - Query event(PostEkuCanary(canary,eku_sts,pubAK_5,pubTIK_5,pubKEM_5)) && attacker(eku_sts) ==> event(LeakedTIK(pubTIK_5)) is true.
+ - Query event(PostEkuCanary(canary,eku_sts,pubAK_5,pubTIK_5,pubKEM_5)) && attacker(eku_sts) ==> event(LeakedKEM(pubKEM_5)) is true.
+ - Query not (event(PostEkuCanary(canary,eku_sts,pubAK_5,pubTIK_5,pubKEM_5)) && attacker(eku_sts)) is false.
+ - Query event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) && event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) && event(ClientReceivesAppData(ID_S_4,app_data,eku_sts,attest_psk_2,cr_2,sr_2)) && attacker(eku_sts) ==> event(LeakedKEM(pubKEM_5)) is true.
+ - Query not (event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) && event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) && event(ClientReceivesAppData(ID_S_4,app_data,eku_sts,attest_psk_2,cr_2,sr_2)) && event(LeakedKEM(pubKEM_5))) is false.
+ - Query inj-event(ClientReceivesAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) && inj-event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> (inj-event(ServerSendsAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) && inj-event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state))) || event(LeakedAK(pubAK_5)) is true.
+ - Query inj-event(ClientReceivesAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) && inj-event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> (inj-event(ServerSendsAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) && inj-event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state))) || event(LeakedTIK(pubTIK_5)) is true.
+ - Query inj-event(ClientReceivesAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) && inj-event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> (inj-event(ServerSendsAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) && inj-event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state))) || event(LeakedKEM(pubKEM_5)) is true.
+ - Query inj-event(ClientReceivesAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) && inj-event(ClientComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubKEM_5,dev_state)) ==> inj-event(ServerSendsAppData(ID_S_4,app_data,eku_key,attest_psk_2,cr_2,sr_2)) && inj-event(PreServerComp(ID_S_4,pubTIK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubKEM_5,dev_state)) is false.
+Associated lemma(s):
+ - Lemma event(ClientDerivesPSK(attest_psk_2,pubKEM_5)) && attacker(attest_psk_2) ==> attacker(privKEM_3) is true in process 1.
+ - Lemma attacker(privKEM[!2 = v_70,!1 = v_71]) ==> event(LeakedKEM(pubKEM_5)) is true in process 1.
+ - Lemma attacker(privAK[!1 = v_70]) ==> event(LeakedAK(pubAK_5)) is true in process 1.
+ - Lemma attacker(privTIK[!2 = v_70,!1 = v_71]) ==> event(LeakedTIK(pubTIK_5)) is true in process 1.
+
+50:27.67 total
+--------------------------------------------------------------

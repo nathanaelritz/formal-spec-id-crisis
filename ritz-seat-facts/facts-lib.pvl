@@ -1,0 +1,344 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+    This work is a unique adaptation and extension, developed apart from the original
+    academic model released under the Apache 2.0 license: 
+
+    https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main
+*)
+
+(* ~==================================================================~
+   facts-lib.pvl — Consolidated declarations for the FACTS model.
+
+   Loaded after tls-lib-simple-queryless.pvl, before facts-handshake.pvl.
+   Contains all types, functions, reductions, constants, tables, channels,
+   and event declarations that are NOT part of the base TLS 1.3 library.
+
+   Unused declarations (not referenced by any active process or query)
+   are isolated in the final section and commented out.
+   ~==================================================================~ *)
+
+
+(* ================================================================== *)
+(*  1.  Channels                                                      *)
+(* ================================================================== *)
+
+(* Untrusted discovery channel — models DNS/HTTPS lookup of server
+   identity documents.  Used by gen_agents_data (publish) and
+   run_Client (fetch + verify).  *)
+free untrusted_dns: channel.
+
+
+(* ================================================================== *)
+(*  2.  Tables                                                        *)
+(* ================================================================== *)
+
+(* All parameters for the server side.
+   agent_keys(ID_S, privTIK, pubTIK, privKEM, pubKEM, privAK, pubAK) *)
+table agent_keys(identity, privkey, pubkey, privkey, pubkey, privkey, pubkey).
+
+(* trust_store(ID_S, pubTIK, pubKEM, server_cert) *)
+table trust_store(identity, pubkey, pubkey, bitstring).
+
+(* EKU DHE Dropbox *)
+table eku_dh_shared(bitstring,bitstring).
+
+(* ================================================================== *)
+(*  3.  Cryptographic primitives                                      *)
+(* ================================================================== *)
+
+(* ── BASE HPKE (RFC 9180 Mode 0x00) — no sender authentication ───── *)
+fun hpkeSeal(bitstring, bitstring, pubkey): bitstring.
+reduc forall m: bitstring, aad: bitstring, recip_sk: privkey;
+
+  hpkeOpen(hpkeSeal(m, aad, pk(recip_sk)), aad, recip_sk) = m.
+
+(* ── Auth HPKE Mode 0x02 (RFC 9180 2..1) — reserved for mTLS ─────── *)
+fun authHpkeSeal(bitstring, bitstring, pubkey, privkey): bitstring.
+reduc forall m: bitstring, aad: bitstring, recip_sk: privkey, 
+sender_sk: privkey;
+
+  authHpkeOpen(authHpkeSeal(m, aad, pk(recip_sk), sender_sk),
+               aad,
+               recip_sk,
+               pk(sender_sk)) = m.
+
+(* ── Symmetric AEAD for quote confidentiality ────────────────────  *)
+fun attest_seal(bitstring, bitstring): bitstring.
+reduc forall pt: bitstring, k: bitstring;
+  attest_open(attest_seal(pt, k), k) = pt.
+
+(* ── Symmetric AEAD for application-data confidentiality ─────────  *)
+fun attest_msg(bitstring, bitstring): bitstring.
+reduc forall pt: bitstring, k: bitstring;
+  attest_read(attest_msg(pt, k), k) = pt.
+
+(* ── Attestation PSK derived from dual-nonce pair ────────────────  *)
+fun derive_psk_attest(bitstring, bitstring): bitstring.
+
+(* ── RFC 8446bis 4..2.8.2 — DH share validation ──────────────────  *)
+fun validDH(element): bool
+reduc forall x:bitstring;
+      validDH(dh_ideal(G, x)) = true.
+
+(* ── Type converters ─────────────────────────────────────────────  *)
+fun r2b(random): bitstring [data].
+fun ae2b(ae_key): bitstring [data, typeConverter].
+
+(* ── EKU message constructors — I-D.ietf-tls-extended-key-update ── *)
+fun EKU_Req(element): msg [data].
+fun EKU_Resp(element): msg [data].
+fun EKU_NewKey(bitstring): msg [data].
+
+(* ── EKU IKM combiner — FACTS sect. 7.1 PSK injection ───────────── *)
+fun combine_dh_psk(bitstring, bitstring): bitstring.
+
+(* ── EKU transcript input — I-D.ietf-tls-extended-key-update ──────  *)
+fun eku_transcript(msg, msg): bitstring [data].
+fun update_transcript(bitstring, msg, msg): bitstring.
+
+(* ================================================================== *)
+(*  4.  TLS Extension types and message constructors                  *)
+(* ================================================================== *)
+
+(* ── TLS Extension type — RFC 8446 4..2 ──────────────────────────  *)
+type tls_ext.
+
+(* ── EncryptedExtensions — RFC 8446 4..3.1 ───────────────────────  *)
+fun EE(tls_ext): msg [data].
+
+(* ── NoExt: typed null for EE() ───────────────────────────────────  *)
+const EExts: tls_ext.
+
+(* ── ClientHello — carries cn1_ct ciphertext and pubKEM_C ─────────  *)
+fun ClientHello(random, params, bitstring, pubkey): msg [data].
+
+(* ── Cert: Certificate extension carrying
+   (server_cert, cmw_payload).
+   cmw_payload = (attest_binder, encQuote, cn2_ct);                           
+*)
+fun Cert(bitstring, bitstring): msg [data].
+
+
+(* ================================================================== *)
+(*  5.  Constants                                                     *)
+(* ================================================================== *)
+
+(* ── TLS 1.3 CertificateVerify context string ─────────────────────  *)
+const server_cv_context: bitstring.
+const client_cv_context: bitstring.
+
+(* ── Early Attestation 5.1.1 — attestation binder labels ─────────  *)
+const s_attest_base_label : label.  (* "s attestation base" — 5.1.1 *)
+const c_attest_base_label : label.  (* "c attestation base" — 5.1.1 *)
+const attest_label        : label.  (* "attestation"        — 5.1.1 *)
+
+(* ── EKU key schedule labels — I-D.ietf-tls-extended-key-update ───  *)
+const tls13_eku_derived       : label.  (* "derived" analogue for EKU epoch *)
+const tls13_eku_c_ap_traffic  : label.  (* client application traffic secret, epoch N+1 *)
+const tls13_eku_s_ap_traffic  : label.  (* server application traffic secret, epoch N+1 *)
+
+
+(* ================================================================== *)
+(*  6.  Key-leakage events                                            *)
+(* ================================================================== *)
+
+(********************************************************)
+(* LAK Event Definitions *)
+(********************************************************)
+
+(* The Core Immutable Events 
+event LeakedAK(pubkey).
+event LeakedAK2(identity, pubkey, pubkey, pubkey).
+*)
+
+(* 2-Parameter Pairs *)
+event LeakedAK_ID_TIK(identity, pubkey, pubkey).
+event LeakedAK_ID_KEM(identity, pubkey, pubkey).
+event LeakedAK_TIK_KEM(pubkey, pubkey, pubkey).
+
+(* 1-Parameter Singles *)
+event LeakedAK_ID(identity, pubkey).
+event LeakedAK_TIK(pubkey, pubkey).
+event LeakedAK_KEM(pubkey, pubkey).
+
+(* --- *)
+
+(* TIK leakage — marks compromise of TLS Identity Key *)
+event LeakTIK.
+event LeakedTIK(pubkey).
+
+(* KEM leakage — marks compromise of encapsulation key *)
+event LeakKEM.
+event LeakedKEM(pubkey).
+
+(* ── PSK leakage events (not modeled) ──────────────────────────
+event LeakPSK.
+event LeakedPSK(bitstring).
+*)
+
+
+(* ================================================================== *)
+(*  7.  Protocol events — ACTIVE (emitted in process AND queried)     *)
+(* ================================================================== *)
+
+(* ── TIK-specific send/accept (replaces pubEK variants) ───────────  *)
+event SentWithPubTIK(bitstring, pubkey).       (* quote, pubTIK       *)
+event AcceptedWithPubTIK(bitstring, pubkey).   (* quote, pubTIK_rec   *)
+
+(* ── Application data events ──────────────────────────────────────  *)
+event ClientReceivesAppData(identity, bitstring, bitstring, bitstring, random, random).
+event ServerSendsAppData(identity, bitstring, bitstring, bitstring, random, random).
+
+(* ── PSK derivation — used in lemmas.pvl ──────────────────────────  *)
+event ClientDerivesPSK(bitstring, pubkey).   (* (attest_psk, pubKEM)  *)
+
+(* ── WithAK event family ─────────────────────────────────────────
+   Parallel events that bind pubAK into the premise, closing the
+   universally-quantified gap in queries. 
+*)
+
+event ClientFinishedAlivenessWithAK(identity, pubkey).
+event PreServerFinishedAlivenessWithAK(identity, pubkey).
+
+event ClientFin1WayAgrWithAK(identity,
+      pubkey, pubkey, preSharedKey,
+      params, params,
+      ae_key, ae_key, bitstring, bitstring).
+event PreServerFin1WayAgrWithAK(identity,
+      pubkey, pubkey, preSharedKey,
+      params, params,
+      ae_key, ae_key, bitstring).
+
+event ClientFinRecent1WayAgrWithAK(identity,
+      pubkey, pubkey, preSharedKey,
+      params, params,
+      ae_key, ae_key, bitstring, bitstring,
+      random, random).
+event PreServerFinRecent1WayAgrWithAK(identity,
+      pubkey, pubkey, preSharedKey,
+      params, params,
+      ae_key, ae_key, bitstring,
+      random, random).
+
+event ClientFinishedWithAK(pubkey,
+      pubkey, preSharedKey,
+      random, random,
+      params, params,
+      ae_key, ae_key, bitstring, bitstring).
+event PreServerFinishedWithAK(pubkey,
+      pubkey, preSharedKey,
+      random, random,
+      params, params,
+      ae_key, ae_key, bitstring).
+
+event ClientCompWithAK(identity,
+      pubkey, pubkey, preSharedKey,
+      params, params,
+      ae_key, ae_key, bitstring, bitstring,
+      random, random,
+      pubkey, bitstring).
+event PreServerCompWithAK(identity,
+      pubkey, pubkey, preSharedKey,
+      params, params,
+      ae_key, ae_key, bitstring,
+      random, random,
+      pubkey, bitstring).
+
+event AcceptedWithAK(bitstring, pubkey).
+event AcceptedRdataWithAK(bitstring, pubkey).
+event AcceptedWithPubTIKWithAK(bitstring, pubkey, pubkey).
+event ClientConnWithAK(bitstring, pubkey).
+
+(* Compound finish events *)
+event ClientFinishedComp(identity, identity, pubkey, preSharedKey, params, params, ae_key, ae_key, bitstring, random, random, pubkey, bitstring, bitstring).
+event ServerFinishedComp(identity, identity, pubkey, preSharedKey, params, params, ae_key, ae_key, bitstring, random, random, pubkey, bitstring, bitstring).
+
+(* Server-side post-handshake agreement *)
+event ServerFinishedMutualAgr(identity, identity).
+event ServerFinAgr(identity, identity, pubkey, preSharedKey, params, params, ae_key, ae_key, bitstring, bitstring).
+event ServerFinishedRecentAgr(identity, identity, pubkey, preSharedKey, params, params, ae_key, ae_key, bitstring, random, random, bitstring).
+
+(* ── WithKEM event family ────────────────────────────────────────  *)
+(*   Parallel events that bind pubKEM into the premise.              *)
+
+event ClientFinishedAlivenessWithKEM(identity, pubkey).
+event PreServerFinishedAlivenessWithKEM(identity, pubkey).
+
+event ClientFinRecent1WayAgrWithKEM(identity,
+      pubkey, pubkey, preSharedKey,
+      params, params,
+      ae_key, ae_key, bitstring, bitstring,
+      random, random).
+event PreServerFinRecent1WayAgrWithKEM(identity,
+      pubkey, pubkey, preSharedKey,
+      params, params,
+      ae_key, ae_key, bitstring,
+      random, random).
+
+event ClientFinishedWithIDWithKEM(identity, pubkey, pubkey, pubkey,
+      preSharedKey,
+      random, random,
+      params, params,
+      ae_key, ae_key, bitstring, bitstring).
+event PreServerFinishedWithIDWithKEM(identity, pubkey, pubkey, pubkey,
+      preSharedKey,
+      random, random,
+      params, params,
+      ae_key, ae_key, bitstring).
+
+event ClientRA2WithKEM(pubkey, pubkey, pubkey, bitstring).
+event ServerRA2WithKEM(pubkey, pubkey, pubkey, bitstring).
+
+
+(* ================================================================== *)
+(*  8.  Diagnostic / trace-inspection events                          *)
+(* ================================================================== *)
+
+
+(* Canary events — diagnostic markers at key-derivation boundaries.
+   Sealed and output for adversary observation; confirm key hierarchy. *)
+event PreRdataCanary(bitstring, bitstring).   (* keyed under hs  *)
+event PostRdataCanary(bitstring, bitstring).  (* keyed under ems *)
+event PreEkuCanary(bitstring, bitstring).     (* keyed under ems *)
+event PostEkuCanary(bitstring, bitstring, pubkey, pubkey, pubkey).    (* keyed under eku_sts *)
+
+(* Diagnostic / trace marker *)
+event Test(bitstring).
+
+
+(* ================================================================== *)
+(*   9. mTLS/Enrollment for future model extensions.                  *)
+(* ================================================================== *)
+
+(* ── mTLS mutual authentication events 
+event ClientOffersAuth(identity, pubkey, pubkey).
+event ServerAcceptsClientAuth(identity, pubkey, pubkey).
+event ServerFinMutualAgr(identity, identity, pubkey, preSharedKey, params, params, ae_key, ae_key, bitstring).
+event ServerFinRecentMutualAgr(identity, identity, pubkey, preSharedKey, params, params, ae_key, ae_key, bitstring, random, random).
+*)
+
+(* ── Comprehensive Mutual Compound Authentication
+event ClientMutualComp(identity, identity, pubkey, pubkey, pubkey, pubkey, bitstring, bitstring, bitstring, random, random, ae_key, ae_key, bitstring, bitstring).
+event ServerMutualComp(identity, identity, pubkey, pubkey, pubkey, pubkey, bitstring, bitstring, bitstring, random, random, ae_key, ae_key, bitstring, bitstring).
+*)
+
+(* ── Enrollment lifecycle events 
+event EnrollmentIssued(identity, pubkey, pubkey).
+event EnrollmentComplete(identity, pubkey, pubkey).
+*)

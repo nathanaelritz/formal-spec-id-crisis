@@ -1,0 +1,446 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+    This work is a unique adaptation and extension, developed apart from the original
+    academic model released under the Apache 2.0 license: 
+
+    https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main
+*)
+
+(********************************************************)
+(* Client                                               *)
+(********************************************************)
+
+let FactsClient(ID_C:identity, ID_S:identity, pubTIK_S:pubkey, pubKEM_S:pubkey, pubAK:pubkey, pubCA:pubkey) =
+(
+
+  new privKEM_C:privkey;
+  let pubKEM_C = pk(privKEM_C) in
+
+(*  --- *)
+
+  (* Note: The original library supports modeling negotation 
+     of weak DHE and weak hashes. In this model ideal DHE and strong hashes 
+     are hardcoded as a measure to control state explosion, however
+     the caveat remains that this model operates under typical TLS 1.3
+     cryptographic assumptions and does not claim immunity from poor crypto. *)
+
+  let g = StrongDH in
+  let hash_algo = StrongHash in
+  new ev_type:ev_typ;
+  
+  let (x: bitstring, gx: element) = dh_keygen(g) in
+  let offer = nego(aTLS, DHE_13(StrongDH, gx), hash_algo, ev_type) in
+
+(*  --- *)
+
+  new cr:random;  (* random nonce: ClientHello.random; 8446bis page 10 *)
+  new ar:random;  (* random nonce for attestation *)
+
+  let challengeNonce = r2b(ar) in
+  let aad_ct = hash(StrongHash, (pubKEM_S, cr, offer)) in
+  let cn1_ct = hpkeSeal(challengeNonce, aad_ct, pubKEM_S) in
+
+  let ch = ClientHello(cr, offer, cn1_ct, pubKEM_C) in  (* negotiation extensions carried implicitly in ev_type *)
+
+  (* Standard TLS 1.3 NoPSK Early Secret — RFC 8446 sect. 7.1 *)
+  let psk = NoPSK in
+  let (es:bitstring, kb:mac_key, kc0:ae_key, ems0:bitstring) = kdf_es(psk, msg2bytes(ch)) in
+
+  event ClientOffersHash(cr, hash_algo);  (*hash algorithm used for HKDF [Table 4 in Appendix B.4 8446bis]*)
+  event ClientOffersKEX(cr, DHE_13(g,gx));  (* supported_groups and key_share extensions [sec. 4.1.1 in 8446] *)
+  event ClientOffersEvType(cr, ev_type);
+  
+  (****************************)
+  (* send ClientHello message *)
+  out(io, (pubTIK_S, ch)); 
+  (****************************)
+
+  (****************************)
+  (* Receive ServerHello — RFC 8446 sect. 4.1.3 *)
+  in(io, (=pubKEM_C, SH(sr, mode)));
+  (****************************)
+
+  let shash_algo = StrongHash in
+  let nego(=aTLS, DHE_13(=g,gy), =shash_algo, sev_type) = mode in
+
+  if validDH(gy) = true then (* Sec 4.2.8.2 — RFC 8446bis sect. 4.2.8.2 *)
+  (
+    let log_SH = (ch, SH(sr,mode)) in  (* sent ClientHello || received ServerHello *)
+    
+    let gxy = e2b(dh_exp(g, gy, x)) in  (* (EC)DHE — RFC 8446 sect. 7.1 *)
+    let (hs:bitstring, kch:ae_key, ksh:ae_key, kcm:mac_key, ksm:mac_key) = kdf_hs(es, gxy, log_SH) in
+
+    (*******************************)
+    (* Receive EncryptedExtensions *)
+    in(io, (=pubKEM_C, EE(EExts)));  (* standard EncryptedExtensions; negotiation response implicit in mode *)
+    (*******************************)
+    let log_EE = (log_SH, EE(EExts)) in  (* ... || received EncryptedExtensions *)
+
+    (*******************************)
+    (* Receive Certificate message *)
+    in(io, (=pubKEM_C, Cert(server_cert:bitstring, cmw_data:bitstring)));
+    (*******************************)
+
+    (* [Canary: PreRdata] Emitted under raw hs before attestation binds.  *)
+    new canary_pre: bitstring;
+    out(io, attest_seal(canary_pre, hs));
+    event PreRdataCanary(canary_pre, hs);
+
+    (* Early Attestation sect. 5.1.1 — Attestation Binder computation.
+       s_attest_base = Derive-Secret(0, "s attestation base", ClientHello...EncryptedExtensions)
+       s_attest_binder = HKDF-Expand-Label(s_attest_base, "attestation", TLS_Server_Public_Key, Hash.length)
+       Binder is NOT secret; zero is used as the secret input per the draft.  *)
+    let s_attest_base = derive_secret(zero, s_attest_base_label, log_EE) in
+    let s_attest_binder = hkdf_expand_label(s_attest_base, attest_label, p2b(pubTIK_S)) in
+
+    let (encQuote:bitstring, cn2_ct:bitstring) = cmw_data in
+
+    let aad_ee = s_attest_binder in
+    let challengeNonce2 = hpkeOpen(cn2_ct, aad_ee, privKEM_C) in
+    let attest_psk = derive_psk_attest(challengeNonce, challengeNonce2) in
+    event ClientDerivesPSK(attest_psk, pubKEM_S);
+
+    (* Decrypt the Evidence — outside Attesting Environment *)
+    let quote = attest_open(encQuote, attest_psk) in
+    let (dataSign:bitstring, sig:bitstring) = quote in
+    let (rdata_recv:bitstring, dev_status1:bitstring) = dataSign in
+
+    if verify(pubCA, (ID_S, pubTIK_S, pubKEM_S), server_cert) = true then (* WebPKI cert *)
+    if verify(pubAK, dataSign, sig) = true then       (* AK signature over dataSign *)
+    if rdata_recv = hash(StrongHash, (s_attest_binder, challengeNonce, challengeNonce2)) then (* sect. 5.1.2 binder match *)
+    if dev_status1 = dev_statusRef then   (* platform measurements *)
+    (
+      let log_CRT = (log_EE, Cert(server_cert, cmw_data)) in  (* ...EE || Certificate+attestation-ext — RFC 8446 sect. 4.4 transcript *)
+
+      (*************************************)
+      (* Receive CertificateVerify message — RFC 8446 sect. 4.4.3 *)
+      in(io, (=pubKEM_C, CV(sg)));
+      (*************************************)
+
+      if verify(pubTIK_S, (server_cv_context, hash(shash_algo, log_CRT)), sg) = true then  (* standard CertificateVerify; TIK_S signs transcript hash *)
+      (
+        event Accepted(cmw_data);
+        event AcceptedWithAK(cmw_data, pubAK);
+        event Appraised(log_SH);
+        event AcceptedRdata(dev_status1);
+        event AcceptedRdataWithAK(dev_status1, pubAK);
+        event AcceptedWithPubTIK(cmw_data, pubTIK_S);
+        event AcceptedWithPubTIKWithAK(cmw_data, pubTIK_S, pubAK);
+        let log_CV = (log_CRT, CV(sg)) in
+
+          (*********************************)
+          (* receive server Finished message containing hmac of log *)
+          in(io, (=pubKEM_C, FIN(m1)));  
+          (*********************************)
+
+          if m1 = hmac(hash_algo, ksm, log_CV) then  (* Finished MAC — RFC 8446 sect. 4.4.4 *)
+          (
+            let log_SFIN = (log_CV, FIN(m1)) in
+            let (ms:bitstring, kc:ae_key, ks:ae_key, ems:bitstring) = kdf_ms(hs, log_SFIN) in  (* Master Secret — RFC 8446 sect. 7.1 *)
+
+            (* [Canary: PostRdata] Emitted under ems after full attestation and key schedule. *)
+            new canary_post: bitstring;
+            out(io, attest_seal(canary_post, ems));
+            event PostRdataCanary(canary_post, ems);
+
+            let m2 = hmac(hash_algo, kcm, log_SFIN) in
+            let log_CFIN = (log_SFIN, FIN(m2)) in
+            let rms = kdf_psk(ms, log_CFIN) in
+
+            event ClientFinished(pubTIK_S, psk, cr, sr, offer, mode, kc, ks, ems, rms);
+            event ClientFinishedWithAK(pubTIK_S, pubAK, psk, cr, sr, offer, mode, kc, ks, ems, rms);
+            event ClientFinishedAliveness(ID_S);
+            event ClientFinishedAlivenessWithAK(ID_S, pubAK);
+            event ClientFinishedAlivenessWithKEM(ID_S, pubKEM_S);
+            event ClientFinishedWeakAgr(ID_S, ID_C);
+            event ClientFinAgr(ID_S, ID_C, pubTIK_S, psk, offer, mode, kc, ks, ems, rms);
+            event ClientFin1WayAgr(ID_S, pubTIK_S, psk, offer, mode, kc, ks, ems, rms);
+            event ClientFin1WayAgrWithAK(ID_S, pubTIK_S, pubAK, psk, offer, mode, kc, ks, ems, rms);
+            event ClientFinRecent1WayAgr(ID_S, pubTIK_S, psk, offer, mode, kc, ks, ems, rms, cr, sr);
+            event ClientFinRecent1WayAgrWithAK(ID_S, pubTIK_S, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr);
+            event ClientFinRecent1WayAgrWithKEM(ID_S, pubTIK_S, pubKEM_S, psk, offer, mode, kc, ks, ems, rms, cr, sr);
+            event ClientFinRecentAgr(ID_S, ID_C, pubTIK_S, psk, offer, mode, kc, ks, ems, rms, cr, sr);
+            event ClientFinishedWithID(ID_S, pubTIK_S, pubAK, psk, cr, sr, offer, mode, kc, ks, ems, rms);
+            event ClientFinishedWithIDWithKEM(ID_S, pubTIK_S, pubAK, pubKEM_S, psk, cr, sr, offer, mode, kc, ks, ems, rms);
+            event ClientFinishedWithBothPub(pubAK, psk, pubTIK_S, cr, sr, offer, mode, kc, ks, ems, rms);
+            event ClientConn(cmw_data);
+            event ClientConnWithAK(cmw_data, pubAK);
+            event ClientComp(ID_S, pubTIK_S, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM_S, dev_status1);
+            event ClientCompWithAK(ID_S, pubTIK_S, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM_S, dev_status1);
+            event ClientRA(pubAK, pubTIK_S, dev_status1, cmw_data);
+            event ClientRA2(pubAK, pubTIK_S, dev_status1);
+            event ClientRA2WithKEM(pubAK, pubTIK_S, pubKEM_S, dev_status1);
+            event ClientRA3(pubAK, pubTIK_S, dev_status1, ID_C);
+            event ClientRAWithoutAK(pubTIK_S, dev_status1, cmw_data);
+            event ClientRANew(ID_S, pubTIK_S, pubAK, pubKEM_S, dev_status1, cmw_data);
+            event ClientID(ID_S, gxy);
+            event ClientFinishedComp(ID_S,ID_C,pubTIK_S,psk,offer,mode,kc,ks,ems,cr,sr,pubKEM_S,rms,dev_status1);
+
+            (*********************************)
+            (* send ClientFinished message — RFC 8446 sect. 4.4.4 *)
+            out(io, (pubTIK_S, FIN(m2)));  
+            (*********************************)
+
+            (*********************************)
+            (*    POST_HANDSHAKE_APP_DATA    *) 
+            (*********************************)
+
+            (* [Canary: PreEku] Emitted under ems before EKU rotation. *)
+            new canary_peku: bitstring;
+            out(io, attest_seal(canary_peku, ems));
+            event PreEkuCanary(canary_peku, ems);
+
+            (* Post-handshake EKU — I-D.ietf-tls-extended-key-update 
+               + FACTS sect. 7.1 PSK injection concept *)
+
+            new eku_gxy: bitstring; 
+            out(io, (pubTIK_S, attest_msg(eku_gxy, ae2b(kc))));
+
+            (* transcript_hash_N+1 = Hash(transcript_hash_0 || EKU(req) || EKU(resp))
+               transcript_hash_0 covers ClientHello..ClientFinished = log_CFIN 
+               using s_attest_binder as stub to control state explosion *)
+            let eku_log_c = s_attest_binder in
+
+            (* inject into IKM per FACTS sect. 7.1 *)
+            let combined_ikm = combine_dh_psk(eku_gxy, attest_psk) in 
+            let main_secret_n1_c = hkdf_extract(ms, combined_ikm) in
+
+            (* let eku_cts_c = derive_secret(main_secret_n1_c, tls13_eku_c_ap_traffic, eku_log_c) in *)
+            let eku_sts_c = derive_secret(main_secret_n1_c, tls13_eku_s_ap_traffic, eku_log_c) in
+
+            (* [Canary: PostEku] Emitted under eku_sts_c — server write key, attestation-bound rotated key. *)
+            new canary_eku: bitstring;
+            out(io, attest_seal(canary_eku, eku_sts_c));
+            event PostEkuCanary(canary_eku, eku_sts_c, pubAK, pubTIK_S, pubKEM_S);
+
+            in(io, (=pubKEM_C, app_msg_enc: bitstring));
+            let app_msg_s = attest_read(app_msg_enc, eku_sts_c) in
+            event ClientReceivesAppData(ID_S, app_msg_s, eku_sts_c, attest_psk, cr, sr)
+          )
+        )
+      )
+    )
+  )
+.
+
+(********************************************************)
+(* Server                                               *)
+(********************************************************)
+   
+let FactsServer(ID_S:identity, privTIK:privkey, privKEM:privkey, privAK:privkey, server_cert:bitstring) =
+(
+
+  let pubTIK = pk(privTIK) in
+  let pubAK  = pk(privAK) in
+
+  (*****************************)
+  (* Receive ClientHello message — RFC 8446 sect. 4.1.2 *)
+  in(io, (=pubTIK, ch:msg));  
+  (*****************************)
+
+  (* pattern matching to ensure that received message in variable ch is in the 
+     desired format fun CH(random,params,random):msg [data]. nonce will be 
+     stored in variable cr and parameters will be stored in variable offer. 
+  *)
+  let ClientHello(cr,offer,cn1_ct,pubKEM_C) = ch in (* Attestation nonce is encapsulated in ciphertext *)
+   
+  (* Standard TLS 1.3 NoPSK Early Secret — RFC 8446 sect. 7.1 *)
+  let psk = NoPSK in
+  let (es:bitstring, kb:mac_key, kc0:ae_key, ems0:bitstring) = kdf_es(psk, msg2bytes(ch)) in
+
+(*  --- *)
+
+  (* Note: The original library supports modeling negotation 
+     of weak DHE and weak hashes. In this model ideal DHE and strong hashes 
+     are hardcoded as a measure to control state explosion, however
+     the caveat remains that this model operates under typical TLS 1.3
+     cryptographic assumptions and does not claim immunity from poor crypto. *)
+
+  let hash_algo = StrongHash in
+  let g = StrongDH in
+
+  let (y:bitstring,gy:element) = dh_keygen(g) in
+  
+  let nego(=aTLS, DHE_13(=g, gx), =hash_algo, ev_type) = offer in
+  let mode = nego(aTLS, DHE_13(g, gy), hash_algo, ev_type) in  (* Server selects mode — RFC 8446 sect. 4.1.3 *)
+
+(*  --- *)
+
+  new sr:random;  (* Server nonce — RFC 8446 sect. 4.1.3 *)
+
+  (*****************************)
+  (* Send ServerHello — RFC 8446 sect. 4.1.3 *)
+  out(io, (pubKEM_C, SH(sr,mode)));  
+  (*****************************)
+
+  let log_SH = (ch,SH(sr,mode)) in
+  event ServerChoosesKEX(cr,sr,DHE_13(g,gy));
+  event ServerChoosesHash(cr,sr,hash_algo);
+  event ServerChoosesATLS(cr,sr,aTLS);
+  event ServerChoosesEvType(cr,sr,ev_type);
+
+  if validDH(gx) = true then (* RFC 8446bis sect. 4.2.8.2 *)
+  (
+    (*****************************)
+    (* Send EncryptedExtensions *)
+    out(io, (pubKEM_C, EE(EExts)));  (* standard EncryptedExtensions; negotiation response implicit in mode *)
+    (*****************************)
+    let log_EE = (log_SH, EE(EExts)) in
+
+    let gxy = e2b(dh_exp(g,gx,y)) in  (* (EC)DHE — RFC 8446 sect. 7.1 *)
+    let (hs:bitstring,kch:ae_key,ksh:ae_key,kcm:mac_key,ksm:mac_key) = kdf_hs(es,gxy,log_SH) in
+    event ServerID(ID_S, gxy);
+
+    (* Early Attestation sect. 5.1.1 — Server computes attestation binder.
+         s_attest_base = Derive-Secret(0, "s attestation base", ClientHello...EncryptedExtensions)
+         s_attest_binder = HKDF-Expand-Label(s_attest_base, "attestation", TLS_Server_Public_Key, Hash.length)
+         Binder is passed to TEE as the nonce input; TEE signs it into Evidence.
+         Per sect. 5.2: Evidence MUST include TIK public key hash to bind TIK to TEE. *)
+    let s_attest_base = derive_secret(zero, s_attest_base_label, log_EE) in
+    let s_attest_binder = hkdf_expand_label(s_attest_base, attest_label, p2b(pubTIK)) in 
+
+    (* Decapsulate CN1 using privKEM *)
+    let pubKEM = pk(privKEM) in
+    let aad_ct = hash(StrongHash, (pubKEM, cr, offer)) in
+    let challengeNonce = hpkeOpen(cn1_ct, aad_ct, privKEM) in
+
+    (* Generate counterNonce2 (CN2); seal to pubKEM_C; *)
+    new challengeNonce2:bitstring;
+    let aad_ee = s_attest_binder in
+    let cn2_ct = hpkeSeal(challengeNonce2, aad_ee, pubKEM_C) in
+
+    (* Evidence generation *)
+    (* model of dev_status (measurements): input from adversary *)
+    (* Lets the adversary instantiate any desired VM 
+        but only the one with correct measurements will be accepted at Verifier
+    in(io, dev_status1: bitstring);  *)
+
+    (* Alternatively, every TEE and CVM is running identical firmware *)
+    let dev_status1 = dev_statusRef in 
+    let rdata = hash(StrongHash, (s_attest_binder, challengeNonce, challengeNonce2)) in
+
+(*** Attesting Environment Boundary ***)
+    let dataSign = (rdata, dev_status1) in
+    let quote = (dataSign, sign(privAK, dataSign)) in
+(*** --- ***)
+
+    let attest_psk = derive_psk_attest(challengeNonce, challengeNonce2) in
+    let encQuote = attest_seal(quote, attest_psk) in
+    let cmw_data = (encQuote, cn2_ct) in
+
+    event Conveyed(log_SH);
+    event Sent(cmw_data);
+    event SentWithPubTIK(cmw_data, pubTIK);
+    event SentRdata(dev_status1);
+    event ServerRA(ID_S, pubTIK, pubAK, pubKEM, dev_status1, cmw_data);
+    event ServerRA2(pubAK, pubTIK, dev_status1);
+    event ServerRA2WithKEM(pubAK, pubTIK, pubKEM, dev_status1);
+    event ServerRAWithoutAK(pubTIK, dev_status1, cmw_data);
+
+    (*****************************)
+    (* Send Certificate message *)
+    out(io, (pubKEM_C, Cert(server_cert, cmw_data)));
+    (*****************************)
+    let log_CRT = (log_EE, Cert(server_cert, cmw_data)) in
+
+    (* CertificateVerify — RFC 8446 sect. 4.4.3,
+       TIK (privTIK) signs transcript hash *)
+    let sg = sign(privTIK, (server_cv_context, hash(hash_algo, log_CRT))) in
+
+    (*****************************)
+    (* CertificateVerify message *)
+    out(io, (pubKEM_C, CV(sg))); 
+    (*****************************)
+
+    let log_CV = (log_CRT, CV(sg)) in
+
+    (* serverFinished — RFC 8446 sect. 4.4.4 *)
+    let m1 = hmac(hash_algo, ksm, log_CV) in
+    let log_SFIN = (log_CV, FIN(m1)) in
+    let (ms:bitstring, kc:ae_key, ks:ae_key, ems:bitstring) = kdf_ms(hs, log_SFIN) in  (* RFC 8446 sect. 7.1 *)
+
+    event PreServerFinished(pubTIK, psk, cr, sr, offer, mode, kc, ks, ems);
+    event PreServerFinishedWithAK(pubTIK, pubAK, psk, cr, sr, offer, mode, kc, ks, ems);
+    event PreServerFinishedAliveness(ID_S);
+    event PreServerFinishedAlivenessWithAK(ID_S, pubAK);
+    event PreServerFinishedAlivenessWithKEM(ID_S, pubKEM);
+    event PreServerFinishedWeakAgr(ID_S, NULL_ID);
+    event PreServerFin1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems);
+    event PreServerFin1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems);
+    event PreServerFinRecent1WayAgr(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr);
+    event PreServerFinRecent1WayAgrWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, cr, sr);
+    event PreServerFinRecent1WayAgrWithKEM(ID_S, pubTIK, pubKEM, psk, offer, mode, kc, ks, ems, cr, sr);
+    event PreServerFinAgr(ID_S, NULL_ID, pubTIK, psk, offer, mode, kc, ks, ems);
+    event PreServerFinRecentAgr(ID_S, NULL_ID, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr);
+    event PreServerFinishedWithID(ID_S, pubTIK, pubAK, psk, cr, sr, offer, mode, kc, ks, ems);
+    event PreServerFinishedWithIDWithKEM(ID_S, pubTIK, pubAK, pubKEM, psk, cr, sr, offer, mode, kc, ks, ems);
+    event PreServerFinishedWithBothPub(pubAK, psk, pubTIK, cr, sr, offer, mode, kc, ks, ems);
+    event PreServerComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_status1);
+    event PreServerCompWithAK(ID_S, pubTIK, pubAK, psk, offer, mode, kc, ks, ems, cr, sr, pubKEM, dev_status1);
+
+    (*******************************)
+    (* Send serverFinished message *)
+    out(io, (pubKEM_C, FIN(m1))); 
+    (*******************************)
+    
+    (**********************************)
+    (* receive ClientFinished message *)
+    in(io, (=pubTIK, FIN(m2)));
+    (**********************************)
+
+    if m2 = hmac(hash_algo, kcm, log_SFIN) then  (* RFC 8446 sect. 4.4.4 *)
+    (
+      let log_CFIN = (log_SFIN, FIN(m2)) in
+      let rms = kdf_psk(ms, log_CFIN) in
+      event ServerFinished(cr, sr, psk, pubTIK, offer, mode, kc, ks, ems, rms);
+
+      event ServerFinishedMutualAgr(ID_S, NULL_ID);
+      event ServerFinAgr(ID_S, NULL_ID, pubTIK, psk, offer, mode, kc, ks, ems, rms);
+      event ServerFinishedRecentAgr(ID_S,NULL_ID,pubTIK,psk,offer,mode,kc,ks,ems,cr,sr,rms);
+      event ServerFinishedComp(ID_S,NULL_ID,pubTIK,psk,offer,mode,kc,ks,ems,cr,sr,pubKEM,rms,dev_status1);
+
+      (*********************************)
+      (*    POST_HANDSHAKE_APP_DATA    *) 
+      (*********************************)
+
+      (* Post-handshake EKU — I-D.ietf-tls-extended-key-update 
+         + FACTS sect. 7.1 PSK injection concept *)
+      
+      in(io, (=pubTIK, eku_gxy_enc:bitstring));
+      let eku_gxy = attest_read(eku_gxy_enc, ae2b(kc)) in
+
+      (* transcript_hash_N+1 = Hash(transcript_hash_0 || EKU(req) || EKU(resp))
+       transcript_hash_0 covers ClientHello..ClientFinished = log_CFIN 
+      using s_attest_binder as stub to control state explosion  *)
+      let eku_log_s = s_attest_binder in
+
+      (* inject into IKM per FACTS sect. 7.1 *)
+      let combined_ikm = combine_dh_psk(eku_gxy, attest_psk) in
+      let main_secret_n1_s = hkdf_extract(ms, combined_ikm) in
+
+      (* let eku_cts_s = derive_secret(main_secret_n1_s, tls13_eku_c_ap_traffic, eku_log_s) in *)
+      let eku_sts_s = derive_secret(main_secret_n1_s, tls13_eku_s_ap_traffic, eku_log_s) in
+    
+      (* App data: send one record encrypted under the directional Server Write Key *)
+      new app_msg: bitstring;
+      event ServerSendsAppData(ID_S, app_msg, eku_sts_s, attest_psk, cr, sr);
+      out(io, (pubKEM_C, attest_msg(app_msg, eku_sts_s)))
+    )
+  )
+).

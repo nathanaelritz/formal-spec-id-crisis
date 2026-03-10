@@ -1,0 +1,302 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+    This work is a unique adaptation and extension, developed apart from the original
+    academic model released under the Apache 2.0 license: 
+
+    https://github.com/CCC-Attestation/formal-spec-id-crisis/tree/main
+*)
+
+
+(**********************************************************************)
+(* G-RA1 / G-RA2: RA integrity and per-session freshness             *)
+(*
+  G-RA1a / G-RA2: For all Evidence the client accepts, the specific
+  server AK signed it, and no replay occurred.
+  Result: true under single-key disjunct.
+*)
+(**********************************************************************)
+
+query pubTIK:pubkey, pubAK:pubkey, dev_state:bitstring;
+  inj-event(ClientRA2(pubAK, pubTIK, dev_state)) ==>
+  inj-event(ServerRA2(pubAK, pubTIK, dev_state)) ||
+  event(LeakedTIK(pubTIK))
+.
+
+query pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey, dev_state:bitstring;
+  inj-event(ClientRA2(pubAK, pubTIK, dev_state)) ==>
+  inj-event(ServerRA2(pubAK, pubTIK, dev_state)) ||
+  event(LeakedKEM(pubKEM))
+.
+
+query pubTIK:pubkey, pubAK:pubkey, dev_state:bitstring;
+  inj-event(ClientRA2(pubAK, pubTIK, dev_state)) ==>
+  inj-event(ServerRA2(pubAK, pubTIK, dev_state)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* Falsification boundary — expected false. *)
+query pubTIK:pubkey, pubAK:pubkey, dev_state:bitstring;
+  inj-event(ClientRA2(pubAK, pubTIK, dev_state)) ==>
+  inj-event(ServerRA2(pubAK, pubTIK, dev_state))
+.
+
+(*
+  Evidence integrity with full CMW payload.
+  Accepted fires after CertificateVerify; Sent fires before Certificate send.
+*)
+query ev:bitstring, pubAK:pubkey, pubTIK:pubkey;
+  inj-event(Accepted(ev)) ==>
+  inj-event(Sent(ev)) ||
+  event(LeakedAK(pubAK))
+.
+
+query ev:bitstring, pubTIK:pubkey;
+  inj-event(Accepted(ev)) ==>
+  inj-event(Sent(ev)) ||
+  event(LeakedTIK(pubTIK))
+.
+
+(*
+  Evidence integrity with TIK binding.
+*)
+query ev:bitstring, pubTIK:pubkey, pubAK:pubkey;
+  inj-event(AcceptedWithPubTIK(ev, pubTIK)) ==>
+  inj-event(SentWithPubTIK(ev, pubTIK)) ||
+  event(LeakedAK(pubAK))
+.
+
+query ev:bitstring, pubTIK:pubkey;
+  inj-event(AcceptedWithPubTIK(ev, pubTIK)) ==>
+  inj-event(SentWithPubTIK(ev, pubTIK)) ||
+  event(LeakedTIK(pubTIK))
+.
+
+(*
+  Platform measurement freshness.
+*)
+query dev_state:bitstring, pubAK:pubkey, pubTIK:pubkey;
+  inj-event(AcceptedRdata(dev_state)) ==>
+  inj-event(SentRdata(dev_state)) ||
+  event(LeakedAK(pubAK))
+.
+
+query dev_state:bitstring, pubTIK:pubkey;
+  inj-event(AcceptedRdata(dev_state)) ==>
+  inj-event(SentRdata(dev_state)) ||
+  event(LeakedTIK(pubTIK))
+.
+
+(*
+  ClientConn: client ready to accept connection given Evidence ev.
+*)
+query ev:bitstring, pubAK:pubkey, pubTIK:pubkey;
+  inj-event(ClientConn(ev)) ==>
+  inj-event(Sent(ev)) ||
+  event(LeakedAK(pubAK))
+.
+
+query ev:bitstring, pubTIK:pubkey;
+  inj-event(ClientConn(ev)) ==>
+  inj-event(Sent(ev)) ||
+  event(LeakedTIK(pubTIK))
+.
+
+
+(**********************************************************************)
+(* Goal: Add all parameters (ID,TIK,KEM,AK) in the LeakedAK2 event.   *)
+(* Result: should be false
+  Invalid trace: Table has (ID6,TIK3,KEM4,AK4) but property has (ID4,TIK4,KEM4,AK6)
+  Interpretation: The typical topology with Confidential Computing where
+   the signing key for the Attestation Agent is shared across multiple cVMs
+   produces significant challenges when it comes to assumptions that can be
+   made. In spite of this, the Single key exclusion queries demonstrate
+   that by strictly binding the attestation payload into the TLS channel 
+   (via the s_attest_binder) and wrapping it in KEM-derived encryption, 
+   it remains possible to insulate the tenant from potential 
+   underlying hardware compromises.
+*)
+(**********************************************************************)
+
+(* == 3 Parameters: The full specific context == 
+Result: expected false *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ||
+  event(LeakedAK2(ID, pubTIK, pubKEM, pubAK)) 
+.
+
+(* == 2 Parameters: Stepwise Iterations (Pairs) == 
+
+(* Pair: ID and TIK 
+Result: expected false *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) || 
+  event(LeakedAK_ID_TIK(ID, pubTIK, pubAK))
+.
+
+(* Pair: ID and KEM 
+Result: expected false *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) || 
+  event(LeakedAK_ID_KEM(ID, pubKEM, pubAK))
+.
+
+(* Pair: TIK and KEM 
+Result: expected false *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) || 
+  event(LeakedAK_TIK_KEM(pubTIK, pubKEM, pubAK))
+.
+
+(* == 1 Parameter: Stepwise Iterations (Singles) == *)
+
+(* Single: ID only 
+Result: expected false *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) || 
+  event(LeakedAK_ID(ID, pubAK))
+.
+
+(* Single: TIK only
+Result: expected false  *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) || 
+  event(LeakedAK_TIK(pubTIK, pubAK))
+.
+
+(* Single: KEM only 
+Result: expected false *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) || 
+  event(LeakedAK_KEM(pubKEM, pubAK))
+.
+
+-- *)
+
+(* == 0 Parameters: Single key exclusions == *)
+
+(* pubAK only 
+Result: expected true *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) || 
+  event(LeakedAK(pubAK))
+.
+
+(* pubTIK only 
+Result: expected true *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) || 
+  event(LeakedTIK(pubTIK))
+.
+
+(* pubKEM only 
+Result: expected true *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) || 
+  event(LeakedKEM(pubKEM))
+.
+
+(* Sanity check
+Result: expected false  *)
+query ID:identity, pubTIK:pubkey, pubKEM:pubkey, pubAK:pubkey, dev_state:bitstring, ev:bitstring;
+  event(ClientRANew(ID, pubTIK, pubAK, pubKEM, dev_state, ev)) ==>
+  event(ServerRA(ID, pubTIK, pubAK, pubKEM, dev_state, ev))
+.
+
+(***********************************************************************
+ * G-RA WithAK: Evidence integrity with session-specific AK binding    *
+ ***********************************************************************)
+
+(* Accepted WithAK *)
+query ev:bitstring, pubAK:pubkey;
+  inj-event(AcceptedWithAK(ev, pubAK)) ==>
+  inj-event(Sent(ev)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* Accepted WithAK: falsification boundary — expected false *)
+query ev:bitstring, pubAK:pubkey;
+  inj-event(AcceptedWithAK(ev, pubAK)) ==>
+  inj-event(Sent(ev))
+.
+
+(* AcceptedWithPubTIK WithAK *)
+query ev:bitstring, pubTIK:pubkey, pubAK:pubkey;
+  inj-event(AcceptedWithPubTIKWithAK(ev, pubTIK, pubAK)) ==>
+  inj-event(SentWithPubTIK(ev, pubTIK)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* AcceptedWithPubTIK WithAK: falsification boundary — expected false *)
+query ev:bitstring, pubTIK:pubkey, pubAK:pubkey;
+  inj-event(AcceptedWithPubTIKWithAK(ev, pubTIK, pubAK)) ==>
+  inj-event(SentWithPubTIK(ev, pubTIK))
+.
+
+(* AcceptedRdata WithAK *)
+query dev_state:bitstring, pubAK:pubkey;
+  inj-event(AcceptedRdataWithAK(dev_state, pubAK)) ==>
+  inj-event(SentRdata(dev_state)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* AcceptedRdata WithAK: falsification boundary — expected false *)
+query dev_state:bitstring, pubAK:pubkey;
+  inj-event(AcceptedRdataWithAK(dev_state, pubAK)) ==>
+  inj-event(SentRdata(dev_state))
+.
+
+(* ClientConn WithAK *)
+query ev:bitstring, pubAK:pubkey;
+  inj-event(ClientConnWithAK(ev, pubAK)) ==>
+  inj-event(Sent(ev)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* ClientConn WithAK: falsification boundary — expected false *)
+query ev:bitstring, pubAK:pubkey;
+  inj-event(ClientConnWithAK(ev, pubAK)) ==>
+  inj-event(Sent(ev))
+.
+
+(***********************************************************************
+ * G-RA WithKEM: RA integrity with session-specific KEM                *
+ ***********************************************************************)
+
+query pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey, dev_state:bitstring;
+  inj-event(ClientRA2WithKEM(pubAK, pubTIK, pubKEM, dev_state)) ==>
+  inj-event(ServerRA2WithKEM(pubAK, pubTIK, pubKEM, dev_state)) ||
+  event(LeakedKEM(pubKEM))
+.
+
+(* G-RA WithKEM: falsification boundary — expected false *)
+query pubTIK:pubkey, pubAK:pubkey, pubKEM:pubkey, dev_state:bitstring;
+  inj-event(ClientRA2WithKEM(pubAK, pubTIK, pubKEM, dev_state)) ==>
+  inj-event(ServerRA2WithKEM(pubAK, pubTIK, pubKEM, dev_state))
+.
+

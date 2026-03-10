@@ -1,0 +1,137 @@
+(* 
+    Copyright 2025 Muhammad Usama Sardar, Mariam Moustafa, and Tuomas Aura.
+    Copyright 2026 Nathanael Ritz.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*)
+
+(*
+
+    All queries in this file are expected to return false, confirming
+    that the corresponding events are reachable in the model. A true
+    result would indicate dead code or an over-constrained model.
+*)
+
+
+(**********************************************************************)
+(* Key Secrecy                                                        *)
+(**********************************************************************)
+
+(*
+  privAK secrecy.
+  The attestation signing key never leaves the TEE except via the explicit
+  compromise branch.
+  Result: true.
+*)
+query
+  attacker(new privAK) ==>
+  event(LeakedAK(pk(new privAK)))
+.
+
+query pubAK:pubkey;
+  attacker(new privAK) ==>
+  event(LeakedAK(pubAK))
+.
+
+query cr:random, sr:random,
+      psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring,
+      pubTIK:pubkey;
+  attacker(new privAK) &&
+  event(ClientFinished(pubTIK, psk, cr, sr, offer, mode, kc, ks, ems, rms)) ==>
+  event(LeakedAK(pk(new privAK)))
+.
+
+(*
+  privTIK secrecy.
+  The TLS Identity Key signs CertificateVerify; its compromise is the
+  sole condition under which TLS identity binding fails.
+  Result: true.
+*)
+query
+  attacker(new privTIK) ==>
+  event(LeakedTIK(pk(new privTIK)))
+.
+
+query pubTIK:pubkey;
+  attacker(new privTIK) ==>
+  event(LeakedTIK(pubTIK))
+.
+
+query cr:random, sr:random,
+      psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  attacker(new privTIK) &&
+  event(ClientFinished(pk(new privTIK), psk, cr, sr, offer, mode, kc, ks, ems, rms)) ==>
+  event(LeakedTIK(pk(new privTIK)))
+.
+
+(*
+  privKEM secrecy.
+  The KEM key protects CN1. If an adversary recovers privKEM they can
+  decrypt CN1 and recover attest_psk.
+  Result: true.
+*)
+query
+  attacker(new privKEM) ==>
+  event(LeakedKEM(pk(new privKEM)))
+.
+
+query pubKEM:pubkey;
+  attacker(new privKEM) ==>
+  event(LeakedKEM(pubKEM))
+.
+
+query cr:random, sr:random,
+      psk:preSharedKey, pubTIK:pubkey,
+      offer:params, mode:params, ID_S:identity, dev_state:bitstring,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring, pubKEM:pubkey;
+  attacker(new privKEM) &&
+  event(ClientComp(ID_S, pubTIK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubKEM, dev_state)) ==>
+  event(LeakedKEM(pk(new privKEM)))
+.
+
+(***********************************************************************
+ * Key secrecy WithAK: ClientFinished with session-specific AK         *
+ ***********************************************************************)
+
+(* ClientFinished WithAK: kc secrecy conditioned on bound AK *)
+query cr:random, sr:random, pubTIK:pubkey, pubAK:pubkey,
+      psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  attacker(kc) &&
+  event(ClientFinishedWithAK(pubTIK, pubAK, psk, cr, sr, offer, mode, kc, ks, ems, rms)) ==>
+  event(LeakedAK(pubAK))
+.
+
+(* ClientFinished WithAK: injective agreement *)
+query cr:random, sr:random, pubTIK:pubkey, pubAK:pubkey,
+      psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinishedWithAK(pubTIK, pubAK, psk, cr, sr, offer, mode, kc, ks, ems, rms)) ==>
+  inj-event(PreServerFinishedWithAK(pubTIK, pubAK, psk, cr, sr, offer, mode, kc, ks, ems)) ||
+  event(LeakedAK(pubAK))
+.
+
+(* ClientFinished WithAK: falsification boundary — expected false *)
+query cr:random, sr:random, pubTIK:pubkey, pubAK:pubkey,
+      psk:preSharedKey,
+      offer:params, mode:params,
+      kc:ae_key, ks:ae_key, ems:bitstring, rms:bitstring;
+  inj-event(ClientFinishedWithAK(pubTIK, pubAK, psk, cr, sr, offer, mode, kc, ks, ems, rms)) ==>
+  inj-event(PreServerFinishedWithAK(pubTIK, pubAK, psk, cr, sr, offer, mode, kc, ks, ems))
+.

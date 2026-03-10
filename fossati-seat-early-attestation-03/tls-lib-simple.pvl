@@ -159,17 +159,17 @@ const NULL_bs:bitstring.
 (********************************************************)
 (* LAK *)
 (********************************************************)
-(*    LeakAK(ID,      pubEK,pubAK  ) *)
+(*    LeakAK(ID,      pubTIK,pubAK  ) *)
 event LeakAK(identity,pubkey,pubkey).
 (*    LeakedAK(pubAK) *)
 event LeakedAK(pubkey).
 event LeakedAK2(identity,pubkey,pubkey).
 
 (********************************************************)
-(* LEK *)
+(* LTIK *)
 (********************************************************)
-event LeakEK.
-event LeakedEK(pubkey).
+event LeakTIK.
+event LeakedTIK(pubkey).
 
 (********************************************************)
 (* LLTK *)
@@ -283,7 +283,7 @@ fun nego(tls_typ,kex_alg,hash_alg,ev_typ): params [data].
 fun CH(random,params,random):msg [data].  (* ClientHello *)
 fun SH(random,params):msg [data].  (* ServerHello *)
 (* EncryptedExtensions msg not modelled *)
-(*  CRT(pubEK ,quote    ,selfsign ) *)
+(*  CRT(pubTIK ,quote    ,selfsign ) *)
 fun CRT(pubkey,bitstring,bitstring):msg [data].  (* Certificate message of TLS *)
 fun CV(bitstring):msg [data].  (* CertificateVerify *)
 fun CV_Ext(bitstring,bitstring):msg [data].  (* Extended CertificateVerify *)
@@ -295,9 +295,9 @@ fun FIN(bitstring):msg [data].  (* Finished *)
 event test4.
 
 event Sent(bitstring).
-event SentWithPubEK(bitstring,pubkey).
+event SentWithPubTIK(bitstring,pubkey).
 event Accepted(bitstring,pubkey).
-event AcceptedWithPubEK(bitstring,pubkey,pubkey).
+event AcceptedWithPubTIK(bitstring,pubkey,pubkey).
 event SentRdata(bitstring).
 event AcceptedRdata(bitstring,pubkey).
 event Conveyed(bitstring).
@@ -307,8 +307,8 @@ event ClientConn(bitstring,pubkey).
 event ClientOffersHash(random,hash_alg).
 event ClientOffersKEX(random,kex_alg).
 event ClientOffersEvType(random,ev_typ).
-(* Old: ClientFinished(cr,sr,psk,pubEK,offer,mode,kc,ks,ems,rms) *)
-(* New: ClientFinishedeWithID(ID,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms) *)
+(* Old: ClientFinished(cr,sr,psk,pubTIK,offer,mode,kc,ks,ems,rms) *)
+(* New: ClientFinishedeWithID(ID,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms) *)
 event ClientFinished(pubkey,
   pubkey,
   preSharedKey,
@@ -316,24 +316,24 @@ event ClientFinished(pubkey,
   params,params,
   ae_key,ae_key,bitstring,bitstring).
 event ClientFinishedAliveness(identity, pubkey). (* ID_S, pubAK *)
-(* ClientFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms) *)
+(* ClientFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms) *)
 event ClientFin1WayAgr(identity,
       pubkey,pubkey,preSharedKey,
       params,params,
       ae_key,ae_key,bitstring,bitstring).
-(* ClientFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr) *)
+(* ClientFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr) *)
 event ClientFinRecent1WayAgr(identity,
       pubkey,pubkey,preSharedKey,
       params,params,
       ae_key,ae_key,bitstring,bitstring,
       random,random).
 event ClientFinishedWeakAgr(identity,identity).  (* ID_S,ID_C *)
-(* ClientFinAgr(ID_S,ID_C,pubEK,psk,offer,mode,kc,ks,ems,rms) *)
+(* ClientFinAgr(ID_S,ID_C,pubTIK,psk,offer,mode,kc,ks,ems,rms) *)
 event ClientFinAgr(identity,identity,
       pubkey,preSharedKey,
       params,params,
       ae_key,ae_key,bitstring,bitstring).
-(* ClientFinRecentAgr(ID_S,ID_C,pubEK,psk,offer,mode,kc,ks,ems,rms,cr,sr) *)
+(* ClientFinRecentAgr(ID_S,ID_C,pubTIK,psk,offer,mode,kc,ks,ems,rms,cr,sr) *)
 event ClientFinRecentAgr(identity,identity,
       pubkey,preSharedKey,
       params,params,
@@ -344,7 +344,7 @@ event ClientFinishedWithID(identity,pubkey,pubkey,
   random,random,
   params,params,
   ae_key,ae_key,bitstring,bitstring).
-(* New: ClientFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms) *)  
+(* New: ClientFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms) *)  
 event ClientFinishedWithBothPub(pubkey,preSharedKey,
   pubkey,
   random,random,
@@ -352,26 +352,26 @@ event ClientFinishedWithBothPub(pubkey,preSharedKey,
   ae_key,ae_key,bitstring,bitstring).
 
 (* ClientComp represents a composition event with parameters from both RA and TLS *)
-(* ClientComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state) *)
+(* ClientComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubTIK,dev_state) *)
 event ClientComp(identity,
       pubkey,pubkey,preSharedKey,
       params,params,
       ae_key,ae_key,bitstring,bitstring,
       random,random,
       pubkey,bitstring).
-(* ClientRA is for explicit agreement of all RA parameters: (pubAK,pubEK,dev_state,ev) *)
+(* ClientRA is for explicit agreement of all RA parameters: (pubAK,pubTIK,dev_state,ev) *)
 event ClientRA(pubkey,pubkey,bitstring,bitstring).
 event ClientRA2(pubkey,pubkey,bitstring).
 event ClientRA3(pubkey,pubkey,bitstring,identity).
-event ClientRANew(identity,pubkey,pubkey,pubkey,bitstring,bitstring). (* ID,pubEK,pubAK,pubEK,dev_state,ev *)
+event ClientRANew(identity,pubkey,pubkey,pubkey,bitstring,bitstring). (* ID,pubTIK,pubAK,pubTIK,dev_state,ev *)
 event ClientRAWithoutAK(pubkey,bitstring,bitstring).
 
 event ServerChoosesHash(random,random,hash_alg).
 event ServerChoosesKEX(random,random,kex_alg).
 event ServerChoosesEvType(random,random,ev_typ).
 event ServerChoosesATLS(random,random,tls_typ).
-(* Old: PreServerFinished(cr,sr,psk,pubEK,offer,mode,kc,ks,ems) *)
-(* New: PreServerFinishedWithID(ID,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems) *)
+(* Old: PreServerFinished(cr,sr,psk,pubTIK,offer,mode,kc,ks,ems) *)
+(* New: PreServerFinishedWithID(ID,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems) *)
 event PreServerFinished(pubkey,
             pubkey,
             preSharedKey,
@@ -379,24 +379,24 @@ event PreServerFinished(pubkey,
             params,params,
             ae_key,ae_key,bitstring).
 event PreServerFinishedAliveness(identity, pubkey). (* ID_S, pubAK *)
-(* PreServerFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems) *)
+(* PreServerFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems) *)
 event PreServerFin1WayAgr(identity,
       pubkey,pubkey,preSharedKey,
       params,params,
       ae_key,ae_key,bitstring).
-(* PreServerFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr) *)
+(* PreServerFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr) *)
 event PreServerFinRecent1WayAgr(identity,
       pubkey,pubkey,preSharedKey,
       params,params,
       ae_key,ae_key,bitstring,
       random,random).
 event PreServerFinishedWeakAgr(identity,identity). (* ID_S,ID_C *)
-(* PreServerFinAgr(ID_S,ID_C,pubEK,psk,offer,mode,kc,ks,ems). *)
+(* PreServerFinAgr(ID_S,ID_C,pubTIK,psk,offer,mode,kc,ks,ems). *)
 event PreServerFinAgr(identity,identity,
       pubkey,preSharedKey,
       params,params,
       ae_key,ae_key,bitstring). 
-(* PreServerFinRecentAgr(ID_S,ID_C,pubEK,psk,offer,mode,kc,ks,ems,cr,sr) *)
+(* PreServerFinRecentAgr(ID_S,ID_C,pubTIK,psk,offer,mode,kc,ks,ems,cr,sr) *)
 event PreServerFinRecentAgr(identity,identity,
       pubkey,preSharedKey,
       params,params,
@@ -407,21 +407,21 @@ event PreServerFinishedWithID(identity,pubkey,pubkey,
       random,random,
             params,params,
             ae_key,ae_key,bitstring).
-(* New: PreServerFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems) *)
+(* New: PreServerFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems) *)
 event PreServerFinishedWithBothPub(pubkey,preSharedKey,
       pubkey,
       random,random,
             params,params,
             ae_key,ae_key,bitstring).
 (* PreServerComp represents a composition event with parameters from both RA and TLS *)
-(* PreServerComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubEK,dev_state) *)
+(* PreServerComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubTIK,dev_state) *)
 event PreServerComp(identity,
       pubkey,pubkey,preSharedKey,
       params,params,
       ae_key,ae_key,bitstring,
       random,random,
       pubkey,bitstring).
-(* ServerRA is for explicit agreement of all RA parameters: (ID,pubEK,pubAK,pubEK,dev_state,ev) *)
+(* ServerRA is for explicit agreement of all RA parameters: (ID,pubTIK,pubAK,pubTIK,dev_state,ev) *)
 event ServerRA(identity,pubkey,pubkey,pubkey,bitstring,bitstring).
 event ServerRA2(pubkey,pubkey,bitstring).
 event ServerRAWithoutAK(pubkey,bitstring,bitstring).
@@ -462,8 +462,8 @@ free mesg:bitstring [private].
 query pubAK:pubkey;
   event(LeakedAK(pubAK)).
 
-query pubEK:pubkey;
-  event(LeakedEK(pubEK)).
+query pubTIK:pubkey;
+  event(LeakedTIK(pubTIK)).
 
 (* checks, for all terms ev, whether the event Accepted(ev) can occur. *)
 query ev:bitstring, pubAK:pubkey;
@@ -479,16 +479,16 @@ query ev:bitstring, pubAK:pubkey;
 
 (* should be false (confirms event is reachable) *)
 query cr:random, sr:random,
-      psk:preSharedKey, ID:identity,pubEK:pubkey,pubAK:pubkey, e:element,
+      psk:preSharedKey, ID:identity,pubTIK:pubkey,pubAK:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)).
+      event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)).
 
 query cr:random, sr:random,
-      psk:preSharedKey, ID_S:identity,ID_C:identity,pubEK:pubkey,pubAK:pubkey, e:element,
+      psk:preSharedKey, ID_S:identity,ID_C:identity,pubTIK:pubkey,pubAK:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      event(ClientFinRecentAgr(ID_S,ID_C,pubEK,psk,offer,mode,kc,ks,ems,rms,cr,sr)).
+      event(ClientFinRecentAgr(ID_S,ID_C,pubTIK,psk,offer,mode,kc,ks,ems,rms,cr,sr)).
 
 (* should be false (confirms event is reachable) *)
 query cr:random, sr:random,
@@ -518,21 +518,21 @@ Goal: Events are reachable in the absence of an attacker.
   Protocol can run without any attacker interference (exclude all weaknesses).
 Formalization: ServerLastEvent && ClientLastEvent ==> All weaknesses
 *)
-query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
+query pubTIK:pubkey,dev_state:bitstring,quote:bitstring,
       cr:random, sr:random, cr':random, sr':random,
       ID:identity,pubAK:pubkey,anyAK:pubkey,
       psk:preSharedKey, e:element,
       offer:params, mode:params, ID_S:identity,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-  (* event(ClientComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state)) && *)
-  (* event(PreServerComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubEK,dev_state)) ==> *)
-  (* event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) && *)
-  event(ServerFinished(cr,sr,psk,pubEK,offer,mode,kc,ks,ems,rms)) ==> 
+  (* event(ClientComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubTIK,dev_state)) && *)
+  (* event(PreServerComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubTIK,dev_state)) ==> *)
+  (* event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) && *)
+  event(ServerFinished(cr,sr,psk,pubTIK,offer,mode,kc,ks,ems,rms)) ==> 
   event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
   event(ServerChoosesHash(cr',sr',WeakHash)) ||
   event(SentBadElement) ||
   event(LeakedAK(pubAK)) ||
-  event(LeakedEK(pubEK))
+  event(LeakedTIK(pubTIK))
 .
 
 (**********************************************************************)
@@ -582,42 +582,42 @@ Formalization:
 Result: true
 *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,
+      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubTIK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
       
   attacker(new privAK) &&
-  event(ClientFinishedWithBothPub(pk(new privAK),psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+  event(ClientFinishedWithBothPub(pk(new privAK),psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
   event(LeakedAK(pk(new privAK)))
 .
 
 (* Reachability proof *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,
+      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubTIK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-  event(ClientFinishedWithBothPub(pk(new privAK),psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms))
+  event(ClientFinishedWithBothPub(pk(new privAK),psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms))
 .
 
 (*
-Goal: The attacker cannot acquire privEK that is used inside the CVM
-  The protocol does not leak privEK. No execution in the protocol could lead to the attacker 
-  knowing the privEK.
+Goal: The attacker cannot acquire privTIK that is used inside the CVM
+  The protocol does not leak privTIK. No execution in the protocol could lead to the attacker 
+  knowing the privTIK.
 *)
 query
-  attacker(new privEK) ==>
-  event(LeakedEK(pk(new privEK)))
+  attacker(new privTIK) ==>
+  event(LeakedTIK(pk(new privTIK)))
 .
 
 (* 
 G-RA3b: Alternative using variables 
 Result: should be true
 *)
-query pubEK:pubkey;
-  attacker(new privEK) ==>
-  event(LeakedEK(pubEK))
+query pubTIK:pubkey;
+  attacker(new privTIK) ==>
+  event(LeakedTIK(pubTIK))
 .
 
 (* 
@@ -628,22 +628,22 @@ Formalization:
 Result: true
 *)
 query cr:random, sr:random, cr':random, sr':random, e:element,
-      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,
+      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubTIK:pubkey,
       psk:preSharedKey, p:pubkey, 
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-  attacker(new privEK) &&
-  event(ClientFinished(pk(new privEK),pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
-  event(LeakedEK(pk(new privEK)))
+  attacker(new privTIK) &&
+  event(ClientFinished(pk(new privTIK),pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+  event(LeakedTIK(pk(new privTIK)))
 .
 
 (* Reachability proof *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,
+      ID:identity,pubLTK:pubkey,pubAK:pubkey,pubTIK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-  event(ClientFinished(pk(new privEK),pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms))
+  event(ClientFinished(pk(new privTIK),pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms))
 .
 
 (* 
@@ -655,12 +655,12 @@ Formalization:
 Result: expected true
 *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      attacker(kc) &&     (* Corrected variable from pubAK to pubEK to match protocol *)
-      event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      attacker(kc) &&     (* Corrected variable from pubAK to pubTIK to match protocol *)
+      event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
@@ -669,12 +669,12 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* Result: true *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      attacker(kc) &&     (* Alternative event query with pubAK and pubEK to match protocol *)
-      event(ClientFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      attacker(kc) &&     (* Alternative event query with pubAK and pubTIK to match protocol *)
+      event(ClientFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
@@ -683,40 +683,40 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* Result: true *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      attacker(kc) &&     (* Corrected variable from pubAK to pubEK to match protocol *)
-      event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      attacker(kc) &&     (* Corrected variable from pubAK to pubTIK to match protocol *)
+      event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Result: true *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      attacker(kc) &&     (* Alternative event query with pubAK and pubEK to match protocol *)
-      event(ClientFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      attacker(kc) &&     (* Alternative event query with pubAK and pubTIK to match protocol *)
+      event(ClientFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      attacker(kc) &&     (* Corrected variable from pubAK to pubEK to match protocol *)
-      event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      attacker(kc) &&     (* Corrected variable from pubAK to pubTIK to match protocol *)
+      event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement)
@@ -724,12 +724,12 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* Sanity check *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      attacker(kc) &&     (* Alternative event query with pubAK and pubEK to match protocol *)
-      event(ClientFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      attacker(kc) &&     (* Alternative event query with pubAK and pubTIK to match protocol *)
+      event(ClientFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement)
@@ -737,14 +737,14 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* With all RA and TLS arguments 
 Result: true *)
-query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
+query pubTIK:pubkey,dev_state:bitstring,quote:bitstring,
       cr:random, sr:random, cr':random, sr':random,
       ID:identity,pubAK:pubkey,
       psk:preSharedKey, e:element,
       offer:params, mode:params, ID_S:identity,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
       attacker(kc) &&
-      event(ClientComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state)) ==>
+      event(ClientComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubTIK,dev_state)) ==>
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
@@ -752,29 +752,29 @@ query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
 .
 
 (* Result: true *)
-query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
+query pubTIK:pubkey,dev_state:bitstring,quote:bitstring,
       cr:random, sr:random, cr':random, sr':random,
       ID:identity,pubAK:pubkey,
       psk:preSharedKey, e:element,
       offer:params, mode:params, ID_S:identity,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
       attacker(kc) &&
-      event(ClientComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state)) ==>
+      event(ClientComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubTIK,dev_state)) ==>
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
+query pubTIK:pubkey,dev_state:bitstring,quote:bitstring,
       cr:random, sr:random, cr':random, sr':random,
       ID:identity,pubAK:pubkey,
       psk:preSharedKey, e:element,
       offer:params, mode:params, ID_S:identity,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
       attacker(kc) &&
-      event(ClientComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state)) ==>
+      event(ClientComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubTIK,dev_state)) ==>
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement)
@@ -790,34 +790,34 @@ Formalization: For all evidences that the client accepts in an attested TLS conn
   an honest server has previously generated those evidences unless that specific server's AK has been compromised.
 Events: ClientRA2 is placed when Client is ready to establish connection (just before ClientFinished); 
         ServerRA2 is placed just before sending the evidence 
-Parameters: Since RA-TLS protocol does not use ID,pubEK, server and client cannot agree on those. 
+Parameters: Since RA-TLS protocol does not use ID,pubTIK, server and client cannot agree on those. 
   So not using these parameters in ClientRA2. 
 Result: should be true
 Interpretation of result: The assumption is sufficient to achieve agreement. 
 Leakage of EK is tested to evaluate compound authentication.
 Note: integrity of signData (vs. TEE itself) where ev = sign(privAK, signData) 
 *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey;
-      event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      event(ServerRA2(pubAK,pubEK,dev_state)) ||
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey;
+      event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(LeakedAK(pubAK)) 
 .
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,
 cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
-      event(LeakedEK(pubEK)) 
+      event(LeakedTIK(pubTIK)) 
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,
 cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash))
 .
@@ -825,12 +825,12 @@ cr:random, sr:random, cr':random, sr':random, e:element;
 (* 
 Example instances of above security property: 
 
-event(ClientRA2(pubAK1,pubEK,dev_state)) ==>
-event(ServerRA2(pubAK1,pubEK,dev_state)) ||
+event(ClientRA2(pubAK1,pubTIK,dev_state)) ==>
+event(ServerRA2(pubAK1,pubTIK,dev_state)) ||
 event(LeakedAK(pubAK1)) 
 
-event(ClientRA2(pubAK2,pubEK,dev_state)) ==>
-event(ServerRA2(pubAK2,pubEK,dev_state)) ||
+event(ClientRA2(pubAK2,pubTIK,dev_state)) ==>
+event(ServerRA2(pubAK2,pubTIK,dev_state)) ||
 event(LeakedAK(pubAK2))
 
 and so on ... for all pubAK.
@@ -841,27 +841,27 @@ and so on ... for all pubAK.
 Much weaker goal: exclude anyAK is compromised 
 Result: should be true 
 *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,anyAK:pubkey;
-      event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      event(ServerRA2(pubAK,pubEK,dev_state)) ||
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,anyAK:pubkey;
+      event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(LeakedAK(anyAK)) 
 .
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,anyEK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,anyEK:pubkey,
 cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
-      event(LeakedEK(anyEK)) 
+      event(LeakedTIK(anyEK)) 
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,anyEK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,anyEK:pubkey,
 cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash))
 .
@@ -871,27 +871,27 @@ cr:random, sr:random, cr':random, sr':random, e:element;
 (* 
 Goal: added for all clients 
 Result: should be true *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,ID_C:identity;
-      event(ClientRA3(pubAK,pubEK,dev_state,ID_C)) ==>
-      event(ServerRA2(pubAK,pubEK,dev_state)) ||
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,ID_C:identity;
+      event(ClientRA3(pubAK,pubTIK,dev_state,ID_C)) ==>
+      event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(LeakedAK(pubAK)) 
 .
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,ID_C:identity,
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,ID_C:identity,
 cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA3(pubAK,pubEK,dev_state,ID_C)) ==>
-      event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      event(ClientRA3(pubAK,pubTIK,dev_state,ID_C)) ==>
+      event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
-      event(LeakedEK(pubEK)) 
+      event(LeakedTIK(pubTIK)) 
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,ID_C:identity,
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,ID_C:identity,
 cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA3(pubAK,pubEK,dev_state,ID_C)) ==>
-      event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      event(ClientRA3(pubAK,pubTIK,dev_state,ID_C)) ==>
+      event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash))
 .
@@ -900,28 +900,28 @@ cr:random, sr:random, cr':random, sr':random, e:element;
 Goal: With evidence in parameters 
 Result: should be true 
 *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, e:element;
-      event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(LeakedAK(pubAK)) 
 .
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash))
 .
@@ -930,40 +930,40 @@ query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
 Goal: Generalized ClientRA event with NULL ID and EK
 Result: should be true 
 *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, e:element;
-      event(ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubEK,dev_state,ev)) ==>
-      event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      event(ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubTIK,dev_state,ev)) ==>
+      event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(LeakedAK(pubAK)) 
 .
 
 (* 
 Goal: Remove leakage of AK to see counter-example
 Result: should be false *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, e:element;
-      event(ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubEK,dev_state,ev)) ==>
-      event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev))
+      event(ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubTIK,dev_state,ev)) ==>
+      event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev))
 .
 
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubEK,dev_state,ev)) ==>
-      event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      event(ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubTIK,dev_state,ev)) ==>
+      event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* 
 Goal: Remove leakage of EK to see counter-example
 Result: should be false with AK and EK both compromised *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubEK,dev_state,ev)) ==>
-      event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      event(ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubTIK,dev_state,ev)) ==>
+      event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash))
 .
@@ -974,11 +974,11 @@ Result: should be false
 ProVerif solver produces invalid trace: Table has (ID6,AK3,EK4) but property has (ID4,AK4,EK4)
 Interpretation: Specific leakage of AK is excluded (independent of the combination).
 *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, e:element;
-      event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
-      event(LeakedAK2(ID,pubEK,pubAK)) 
+      event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
+      event(LeakedAK2(ID,pubTIK,pubAK)) 
 .
 
 (* In general, adding more variables/arguments makes a non-injective property stronger 
@@ -999,28 +999,28 @@ Comparison with G-RA1a: This is a much weaker property than G-RA1a. It says that
  pubAK leakage is excluded, rather than a specific one. Since G-RA1a holds for a specific AK, 
  this property holds trivially.
 *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, e:element;
-      event(ClientRAWithoutAK(pubEK,dev_state,ev)) ==>
-      event(ServerRAWithoutAK(pubEK,dev_state,ev)) ||
+      event(ClientRAWithoutAK(pubTIK,dev_state,ev)) ==>
+      event(ServerRAWithoutAK(pubTIK,dev_state,ev)) ||
       event(LeakedAK(pubAK))
 .
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRAWithoutAK(pubEK,dev_state,ev)) ==>
-      event(ServerRAWithoutAK(pubEK,dev_state,ev)) ||
+      event(ClientRAWithoutAK(pubTIK,dev_state,ev)) ==>
+      event(ServerRAWithoutAK(pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRAWithoutAK(pubEK,dev_state,ev)) ==>
-      event(ServerRAWithoutAK(pubEK,dev_state,ev)) ||
+      event(ClientRAWithoutAK(pubTIK,dev_state,ev)) ==>
+      event(ServerRAWithoutAK(pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash))
 .
@@ -1034,27 +1034,27 @@ Interpretation of result: Unlike pre-HS, per-session Evidence Freshness is provi
   under the assumption that pubAK is not leaked 
 Note: replay of signData (vs. TEE itself) where ev = sign(privAK, signData)
 Applications: VM-based TEE (OpenHCL); device attestation *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey;
-      event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      inj-event(ServerRA2(pubAK,pubEK,dev_state)) ||
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey;
+      event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      inj-event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(LeakedAK(pubAK)) 
 .
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      inj-event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      inj-event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
-      event(LeakedEK(pubEK)) 
+      event(LeakedTIK(pubTIK)) 
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      inj-event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      inj-event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash))
 .
@@ -1063,30 +1063,30 @@ query pubEK:pubkey,dev_state:bitstring,pubAK:pubkey,
 Goal: Freshness of Evidence under additional assumptions
 Result: true 
 Interpretation of result: trivially true since the above with less assumptions is true *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, e:element;
-      inj-event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      inj-event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      inj-event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      inj-event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
       event(LeakedAK(pubAK))
 .
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      inj-event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      inj-event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      inj-event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      inj-event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      inj-event(ClientRA2(pubAK,pubEK,dev_state)) ==>
-      inj-event(ServerRA2(pubAK,pubEK,dev_state)) ||
+      inj-event(ClientRA2(pubAK,pubTIK,dev_state)) ==>
+      inj-event(ServerRA2(pubAK,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash))
 .
@@ -1096,58 +1096,58 @@ query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
 (* Goal: With evidence in parameters
 Result: true 
 Interpretation: unlike pre-HS, it holds (stronger security than pre-HS) *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, e:element;
-      event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      inj-event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      inj-event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(LeakedAK(pubAK)) 
 .
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      inj-event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      inj-event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
-      event(LeakedEK(pubEK)) 
+      event(LeakedTIK(pubTIK)) 
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      inj-event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      inj-event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash))
 .
 
 (* Result: true 
 Interpretation: Holds trivially since the above holds with less assumptions *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      inj-event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      inj-event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      inj-event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      inj-event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
       event(LeakedAK(pubAK))
 .
 
 (* Evaluate Compound Authentication *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      inj-event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      inj-event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      inj-event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      inj-event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
+query pubTIK:pubkey,dev_state:bitstring, ev:bitstring,ID:identity,pubAK:pubkey,
       cr:random, sr:random, cr':random, sr':random, e:element;
-      inj-event(ClientRA(pubAK,pubEK,dev_state,ev)) ==>
-      inj-event(ServerRA(ID,pubEK,pubAK,pubEK,dev_state,ev)) ||
+      inj-event(ClientRA(pubAK,pubTIK,dev_state,ev)) ==>
+      inj-event(ServerRA(ID,pubTIK,pubAK,pubTIK,dev_state,ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash))
 .
@@ -1159,7 +1159,7 @@ Result: true
 Method: stepwise refinement (kept adding assumptions from failing traces)
 Note that BadElement is not required in assumptions. 
 *)
-query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
+query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
       inj-event(Accepted(ev,pubAK)) ==>
       inj-event(Sent(ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
@@ -1168,16 +1168,16 @@ query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:id
 .
 
 (* Result: true  *)
-query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
+query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
       inj-event(Accepted(ev,pubAK)) ==>
       inj-event(Sent(ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
+query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
       inj-event(Accepted(ev,pubAK)) ==>
       inj-event(Sent(ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
@@ -1185,11 +1185,11 @@ query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:id
 .
 
 (* 
-Goal: for all pubEK (Added pubEK on LHS)
-Events: AcceptedWithPubEK is placed just after CertificateVerify (NOT after ServerFinished)
+Goal: for all pubTIK (Added pubTIK on LHS)
+Events: AcceptedWithPubTIK is placed just after CertificateVerify (NOT after ServerFinished)
 Result: true *)
-query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
-      inj-event(AcceptedWithPubEK(ev,pubEK,pubAK)) ==>
+query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
+      inj-event(AcceptedWithPubTIK(ev,pubTIK,pubAK)) ==>
       inj-event(Sent(ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
@@ -1197,47 +1197,47 @@ query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:id
 .
 
 (* Result: true  *)
-query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
-      inj-event(AcceptedWithPubEK(ev,pubEK,pubAK)) ==>
+query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
+      inj-event(AcceptedWithPubTIK(ev,pubTIK,pubAK)) ==>
       inj-event(Sent(ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
-      inj-event(AcceptedWithPubEK(ev,pubEK,pubAK)) ==>
+query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
+      inj-event(AcceptedWithPubTIK(ev,pubTIK,pubAK)) ==>
       inj-event(Sent(ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash))
 .
 
 (* 
-Goal: Injective agreement for all pubEK (Added pubEK on RHS too)
-Events: AcceptedWithPubEK is placed just after CertificateVerify (NOT after ServerFinished)
+Goal: Injective agreement for all pubTIK (Added pubTIK on RHS too)
+Events: AcceptedWithPubTIK is placed just after CertificateVerify (NOT after ServerFinished)
 Result: true *)
-query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
-      inj-event(AcceptedWithPubEK(ev,pubEK,pubAK)) ==>
-      inj-event(SentWithPubEK(ev,pubEK)) ||
+query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
+      inj-event(AcceptedWithPubTIK(ev,pubTIK,pubAK)) ==>
+      inj-event(SentWithPubTIK(ev,pubTIK)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
       event(LeakedAK(pubAK))
 .
 
 (* Result: true  *)
-query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
-      inj-event(AcceptedWithPubEK(ev,pubEK,pubAK)) ==>
-      inj-event(SentWithPubEK(ev,pubEK)) ||
+query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
+      inj-event(AcceptedWithPubTIK(ev,pubTIK,pubAK)) ==>
+      inj-event(SentWithPubTIK(ev,pubTIK)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
-      inj-event(AcceptedWithPubEK(ev,pubEK,pubAK)) ==>
-      inj-event(SentWithPubEK(ev,pubEK)) ||
+query ev:bitstring, cr:random, sr:random,cr':random, sr':random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
+      inj-event(AcceptedWithPubTIK(ev,pubTIK,pubAK)) ==>
+      inj-event(SentWithPubTIK(ev,pubTIK)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash))
 .
@@ -1249,7 +1249,7 @@ Events: AcceptedRdata is placed after verification of CertificateVerify (NOT aft
 Result: true
 Interpretation of result: Per-session Evidence Freshness is provided by the protocol with additional assumptions
 *)
-query dev_state:bitstring, cr:random, sr:random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
+query dev_state:bitstring, cr:random, sr:random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
   inj-event(AcceptedRdata(dev_state,pubAK)) ==>
   inj-event(SentRdata(dev_state)) ||
   event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
@@ -1258,16 +1258,16 @@ query dev_state:bitstring, cr:random, sr:random, e:element,ID:identity,pubEK:pub
 .
 
 (* Result: true  *)
-query dev_state:bitstring, cr:random, sr:random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
+query dev_state:bitstring, cr:random, sr:random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
   inj-event(AcceptedRdata(dev_state,pubAK)) ==>
   inj-event(SentRdata(dev_state)) ||
   event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
   event(ServerChoosesHash(cr,sr,WeakHash)) ||
-  event(LeakedEK(pubEK))
+  event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query dev_state:bitstring, cr:random, sr:random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
+query dev_state:bitstring, cr:random, sr:random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
   inj-event(AcceptedRdata(dev_state,pubAK)) ==>
   inj-event(SentRdata(dev_state)) ||
   event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
@@ -1284,7 +1284,7 @@ Method: tried different combinations to see the minimal set which makes it true
 Result: true 
 Interpretation of result: Insight is that BadElement does not matter here. 
                           Intra-HS only requires LeakedAK assumption here *)
-query ev:bitstring, cr:random, sr:random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
+query ev:bitstring, cr:random, sr:random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
       inj-event(ClientConn(ev,pubAK)) ==>
       inj-event(Sent(ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
@@ -1293,16 +1293,16 @@ query ev:bitstring, cr:random, sr:random, e:element,ID:identity,pubEK:pubkey,pub
 .
 
 (* Result: true  *)
-query ev:bitstring, cr:random, sr:random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
+query ev:bitstring, cr:random, sr:random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
       inj-event(ClientConn(ev,pubAK)) ==>
       inj-event(Sent(ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr,sr,WeakHash)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
-query ev:bitstring, cr:random, sr:random, e:element,ID:identity,pubEK:pubkey,pubAK:pubkey;
+query ev:bitstring, cr:random, sr:random, e:element,ID:identity,pubTIK:pubkey,pubAK:pubkey;
       inj-event(ClientConn(ev,pubAK)) ==>
       inj-event(Sent(ev)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
@@ -1331,7 +1331,7 @@ Formalization:
 Details:
   cloud.example.com is ID of physical machine (host) associated with EK.
 *)
-query idS,idXS:identity,pubEK:pubkey,pubAK:pubkey,
+query idS,idXS:identity,pubTIK:pubkey,pubAK:pubkey,
   gxy:bitstring,
   cr:random, sr:random, cr':random, sr':random,
   psk:preSharedKey, p:pubkey, e:element,
@@ -1343,11 +1343,11 @@ query idS,idXS:identity,pubEK:pubkey,pubAK:pubkey,
   event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
   event(ServerChoosesHash(cr',sr',WeakHash)) ||
   event(SentBadElement) ||
-  event(LeakedEK(pubEK))
+  event(LeakedTIK(pubTIK))
 .
 
 (* Result: true  *)
-query idS,idXS:identity,pubEK:pubkey,pubAK:pubkey,
+query idS,idXS:identity,pubTIK:pubkey,pubAK:pubkey,
   gxy:bitstring,
   cr:random, sr:random, cr':random, sr':random,
   psk:preSharedKey, p:pubkey, e:element,
@@ -1363,7 +1363,7 @@ query idS,idXS:identity,pubEK:pubkey,pubAK:pubkey,
 .
 
 (* Sanity check *)
-query idS,idXS:identity,pubEK:pubkey,pubAK:pubkey,
+query idS,idXS:identity,pubTIK:pubkey,pubAK:pubkey,
   gxy:bitstring,
   cr:random, sr:random, cr':random, sr':random,
   psk:preSharedKey, p:pubkey, e:element,
@@ -1400,7 +1400,7 @@ Parameters ds = ID_S
 Result: true
 *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
@@ -1409,12 +1409,12 @@ query cr:random, sr:random, cr':random, sr':random,
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Result: true  *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
@@ -1428,7 +1428,7 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* Sanity check *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
@@ -1441,16 +1441,16 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (*
 G-TLS2b: One-way Non-injective agreement
-Additional parameters to Aliveness: pubEK,psk,offer,mode,kc,ks,ems,rms
+Additional parameters to Aliveness: pubTIK,psk,offer,mode,kc,ks,ems,rms
 Result: true
 *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      event(ClientFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
-      event(PreServerFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems)) ||
+      event(ClientFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
+      event(PreServerFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
@@ -1459,26 +1459,26 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* Result: true  *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      event(ClientFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
-      event(PreServerFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems)) ||
+      event(ClientFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
+      event(PreServerFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      event(ClientFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
-      event(PreServerFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems)) ||
+      event(ClientFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
+      event(PreServerFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement)
@@ -1487,47 +1487,47 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (*
 G-TLS2c: One-way Injective agreement
-Additional parameters to Aliveness: pubEK,psk,offer,mode,kc,ks,ems,rms
+Additional parameters to Aliveness: pubTIK,psk,offer,mode,kc,ks,ems,rms
 Replaced event by inj-event in non-injective agreement
 Result: true
 *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
-      inj-event(PreServerFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems)) ||
+      inj-event(ClientFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
+      inj-event(PreServerFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
       event(LeakedAK(pubAK)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Result: true  *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
-      inj-event(PreServerFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems)) ||
+      inj-event(ClientFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
+      inj-event(PreServerFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
       event(LeakedAK(pubAK)) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
-      inj-event(PreServerFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems)) ||
+      inj-event(ClientFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms)) ==>
+      inj-event(PreServerFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement)
@@ -1540,26 +1540,26 @@ Adds agreement over nonces
 Result: true
 *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
-      inj-event(PreServerFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
+      inj-event(ClientFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
+      inj-event(PreServerFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Result: true  *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
-      inj-event(PreServerFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
+      inj-event(ClientFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
+      inj-event(PreServerFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
@@ -1569,12 +1569,12 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* Sanity check *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
-      inj-event(PreServerFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
+      inj-event(ClientFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
+      inj-event(PreServerFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement)
@@ -1591,19 +1591,19 @@ query cr:random, sr:random, cr':random, sr':random,
 (**********************************************************************)
 (*
 G-CA1: 
-Goal: If privEK is leaked and privAK is not leaked, 
+Goal: If privTIK is leaked and privAK is not leaked, 
             can the Client be sure that it connects with the right Server?
-Formalization: Remove leakage of privEK from G-TLS2d: Recent One-way injective agreement
+Formalization: Remove leakage of privTIK from G-TLS2d: Recent One-way injective agreement
 Result: true
 Interpretation of result: Protocol does provide compound authentication
 *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
-      inj-event(PreServerFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
+      inj-event(ClientFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
+      inj-event(PreServerFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
@@ -1612,26 +1612,26 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* Result: true  *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
-      inj-event(PreServerFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
+      inj-event(ClientFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
+      inj-event(PreServerFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID_S:identity,pubEK:pubkey,pubAK:pubkey,
+      ID_S:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
-      inj-event(PreServerFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
+      inj-event(ClientFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr)) ==>
+      inj-event(PreServerFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement)
@@ -1641,17 +1641,17 @@ query cr:random, sr:random, cr':random, sr':random,
 (**********************************************************************)
 (* Auxiliary Properties for G-CA1 *)
 (* 
-Property: If privEK is leaked and privAK is not leaked, 
+Property: If privTIK is leaked and privAK is not leaked, 
             can the Client be sure that it connects with the right Server?
-Method: follows directly from SA because even excluding LeakedEK(pubEK), it does not hold. 
+Method: follows directly from SA because even excluding LeakedTIK(pubTIK), it does not hold. 
         So here, when we do allow EK to leak, it cannot hold.
 Result: should be false 
 Interpretation of result: Protocol does not provide compound authentication *)
 
-(* This query appears to be mapping pubAK in the position where pubEK should be,
+(* This query appears to be mapping pubAK in the position where pubTIK should be,
    causing a false negative. See the corrected pattern below.
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
@@ -1667,17 +1667,17 @@ query cr:random, sr:random, cr':random, sr':random,
 (**********************************************************************)
 (* Auxiliary Properties for G-CA1 *)
 (* 
-Property: If privEK is leaked and privAK is not leaked, 
+Property: If privTIK is leaked and privAK is not leaked, 
             can the Client be sure that it connects with the right Server?
 Result: returns true
 Interpretation of result: Protocol does provide compound authentication *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
-      inj-event(PreServerFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
+      inj-event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      inj-event(PreServerFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
@@ -1686,30 +1686,30 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* Result: true  *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
-      inj-event(PreServerFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
+      inj-event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      inj-event(PreServerFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Result: true  *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      (* inj-event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
-      inj-event(ClientFinishedWithID(ID,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
-      (* event(ClientFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
-      (* inj-event(PreServerFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) || *)
-      inj-event(PreServerFinishedWithID(ID,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
-      (* event(PreServerFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems)) || *)
+      (* inj-event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
+      inj-event(ClientFinishedWithID(ID,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      (* event(ClientFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
+      (* inj-event(PreServerFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) || *)
+      inj-event(PreServerFinishedWithID(ID,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
+      (* event(PreServerFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems)) || *)
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
@@ -1718,34 +1718,34 @@ query cr:random, sr:random, cr':random, sr':random,
 
 (* Result: true  *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      (* inj-event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
-      inj-event(ClientFinishedWithID(ID,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
-      (* event(ClientFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
-      (* inj-event(PreServerFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) || *)
-      inj-event(PreServerFinishedWithID(ID,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
-      (* event(PreServerFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems)) || *)
+      (* inj-event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
+      inj-event(ClientFinishedWithID(ID,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      (* event(ClientFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
+      (* inj-event(PreServerFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) || *)
+      inj-event(PreServerFinishedWithID(ID,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
+      (* event(PreServerFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems)) || *)
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement) ||
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Sanity check *)
 query cr:random, sr:random, cr':random, sr':random,
-      ID:identity,pubEK:pubkey,pubAK:pubkey,
+      ID:identity,pubTIK:pubkey,pubAK:pubkey,
       psk:preSharedKey, p:pubkey, e:element,
       offer:params, mode:params,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      (* inj-event(ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
-      inj-event(ClientFinishedWithID(ID,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
-      (* event(ClientFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
-      (* inj-event(PreServerFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) || *)
-      inj-event(PreServerFinishedWithID(ID,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
-      (* event(PreServerFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems)) || *)
+      (* inj-event(ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
+      inj-event(ClientFinishedWithID(ID,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms)) ==>
+      (* event(ClientFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms)) ==> *)
+      (* inj-event(PreServerFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) || *)
+      inj-event(PreServerFinishedWithID(ID,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems)) ||
+      (* event(PreServerFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems)) || *)
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       event(SentBadElement)
@@ -1765,29 +1765,29 @@ Method: added all assumptions of RA property (G-RA) and TLS property (G-TLS)
 Result: true
 Interpretation of result: Cryptographic binding of RA and TLS protocols is robust. 
 *)
-query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
+query pubTIK:pubkey,dev_state:bitstring,quote:bitstring,
       cr:random, sr:random, cr':random, sr':random,
       ID:identity,pubAK:pubkey,
       psk:preSharedKey, e:element,
       offer:params, mode:params, ID_S:identity,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state)) ==>
-      inj-event(PreServerComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubEK,dev_state)) ||
+      inj-event(ClientComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubTIK,dev_state)) ==>
+      inj-event(PreServerComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       (* event(SentBadElement) || *)
-      event(LeakedEK(pubEK))
+      event(LeakedTIK(pubTIK))
 .
 
 (* Result: true  *)
-query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
+query pubTIK:pubkey,dev_state:bitstring,quote:bitstring,
       cr:random, sr:random, cr':random, sr':random,
       ID:identity,pubAK:pubkey,
       psk:preSharedKey, e:element,
       offer:params, mode:params, ID_S:identity,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state)) ==>
-      inj-event(PreServerComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubEK,dev_state)) ||
+      inj-event(ClientComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubTIK,dev_state)) ==>
+      inj-event(PreServerComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash)) ||
       (* event(SentBadElement) || *)
@@ -1795,14 +1795,14 @@ query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
 .
 
 (* Sanity check *)
-query pubEK:pubkey,dev_state:bitstring,quote:bitstring,
+query pubTIK:pubkey,dev_state:bitstring,quote:bitstring,
       cr:random, sr:random, cr':random, sr':random,
       ID:identity,pubAK:pubkey,
       psk:preSharedKey, e:element,
       offer:params, mode:params, ID_S:identity,
       kc:ae_key,ks:ae_key,ems:bitstring,rms:bitstring;
-      inj-event(ClientComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_state)) ==>
-      inj-event(PreServerComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubEK,dev_state)) ||
+      inj-event(ClientComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubTIK,dev_state)) ==>
+      inj-event(PreServerComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubTIK,dev_state)) ||
       event(ServerChoosesKEX(cr,sr,DHE_13(WeakDH,e))) ||
       event(ServerChoosesHash(cr',sr',WeakHash))
 .
@@ -1834,7 +1834,7 @@ reduc forall x:bitstring;
 (* (for usability/extensibility), we can use variables for messages, 
 e.g., SH so that these variables can then be used in logs *)
 
-let Client(ID_C:identity,ID_S:identity,pubEK:pubkey,pubAK:pubkey,pubCA:pubkey) =
+let Client(ID_C:identity,ID_S:identity,pubTIK:pubkey,pubAK:pubkey,pubCA:pubkey) =
 (
   in(io, ioffer:params);  (* io is a public channel. ioffer is obtained from adversary as input to allow adversary to generate all valid patterns *)
   let nego(=aTLS,DHE_13(g,eee),hash_algo,ev_type) = ioffer in
@@ -1869,17 +1869,17 @@ let Client(ID_C:identity,ID_S:identity,pubEK:pubkey,pubAK:pubkey,pubCA:pubkey) =
 
     let gxy = e2b(dh_exp(g,gy,x)) in  (* represents (EC)DHE in Key Derivation [Sec. 7.1, RFC8446] *)
     let (hs:bitstring,kch:ae_key,ksh:ae_key,kcm:mac_key,ksm:mac_key) = kdf_hs(es,gxy,log_SH) in
-    in(io,Cert(pubEK,server_cert,cmw_data));  (* receive Certificate message *)
+    in(io,Cert(pubTIK,server_cert,cmw_data));  (* receive Certificate message *)
 
-    (* Verify the CA signature binds ID_S to pubEK — standard WebPKI *)
-    if verify(pubCA, (ID_S, pubEK), server_cert) = true then
+    (* Verify the CA signature binds ID_S to pubTIK — standard WebPKI *)
+    if verify(pubCA, (ID_S, pubTIK), server_cert) = true then
 
     (* Early Attestation §5.1.1 — Attestation Binder computation.
        s_attest_base = Derive-Secret(0, "s attestation base", ClientHello...EncryptedExtensions)
        s_attest_binder = HKDF-Expand-Label(s_attest_base, "attestation", TLS_Server_Public_Key, Hash.length)
        Binder is NOT secret; zero is used as the secret input per the draft. *)
     let s_attest_base = derive_secret(zero, s_attest_base_label, log_EE) in
-    let s_attest_binder = hkdf_expand_label(s_attest_base, attest_label, p2b(pubEK)) in
+    let s_attest_binder = hkdf_expand_label(s_attest_base, attest_label, p2b(pubTIK)) in
 
     (* Destructure CMW evidence: cmw_data = (dataSign, sig) where dataSign = (binder, dev_status) *)
     let (dataSign:bitstring, sig:bitstring) = cmw_data in  (* check quote format *)
@@ -1889,14 +1889,14 @@ let Client(ID_C:identity,ID_S:identity,pubEK:pubkey,pubAK:pubkey,pubCA:pubkey) =
     if binder_in_ev = s_attest_binder then  (* §5.1.2 binder match *)
     if dev_status1 = dev_statusRef then  (* check measurements against Ref. Values *)
 
-    let log_CRT = (log_EE,Cert(pubEK,server_cert,cmw_data)) in  (* ... || received Certificate *)
+    let log_CRT = (log_EE,Cert(pubTIK,server_cert,cmw_data)) in  (* ... || received Certificate *)
 
     in(io,CV(s));  (* receive CertificateVerify message *)
-    if verify(pubEK,hash(shash_algo,log_CRT),s) = true then  (* log_CRT contains msgs up to Certificate *)
+    if verify(pubTIK,hash(shash_algo,log_CRT),s) = true then  (* log_CRT contains msgs up to Certificate *)
     event Accepted(cmw_data,pubAK);
     event Appraised(log_SH);
     event AcceptedRdata(dev_status1,pubAK);
-    event AcceptedWithPubEK(cmw_data,pubEK,pubAK);
+    event AcceptedWithPubTIK(cmw_data,pubTIK,pubAK);
     let log_CV = (log_CRT,CV(s)) in  (* ... || received CertificateVerify *)
 
     in(io,FIN(m1));  (* receive server Finished message containing hmac of log *)
@@ -1907,22 +1907,22 @@ let Client(ID_C:identity,ID_S:identity,pubEK:pubkey,pubAK:pubkey,pubCA:pubkey) =
       let m2 = hmac(StrongHash,kcm,log_SFIN) in  (* hmac(hash_alg,mac_key,bitstring); mac_key = kcm *)
       let log_CFIN = (log_SFIN,FIN(m2)) in  (* ... || sent client Finished *)
       let rms =  kdf_psk(ms,log_CFIN) in
-      event ClientFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms);
+      event ClientFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms);
       event ClientFinishedAliveness(ID_S, pubAK);
       event ClientFinishedWeakAgr(ID_S,ID_C);
-      event ClientFinAgr(ID_S,ID_C,pubEK,psk,offer,mode,kc,ks,ems,rms);
-      event ClientFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms);
-      event ClientFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr);
-      event ClientFinRecentAgr(ID_S,ID_C,pubEK,psk,offer,mode,kc,ks,ems,rms,cr,sr);
-      event ClientFinishedWithID(ID_S,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms);
-      event ClientFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems,rms);
+      event ClientFinAgr(ID_S,ID_C,pubTIK,psk,offer,mode,kc,ks,ems,rms);
+      event ClientFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms);
+      event ClientFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr);
+      event ClientFinRecentAgr(ID_S,ID_C,pubTIK,psk,offer,mode,kc,ks,ems,rms,cr,sr);
+      event ClientFinishedWithID(ID_S,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems,rms);
+      event ClientFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems,rms);
       event ClientConn(cmw_data,pubAK);
-      event ClientComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubEK,dev_status1);
-      event ClientRA(pubAK,pubEK,dev_status1,cmw_data);
-      event ClientRA2(pubAK,pubEK,dev_status1);
-      event ClientRA3(pubAK,pubEK,dev_status1,ID_C);
-      event ClientRAWithoutAK(pubEK,dev_status1,cmw_data);    
-      event ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubEK,dev_status1,cmw_data);
+      event ClientComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,rms,cr,sr,pubTIK,dev_status1);
+      event ClientRA(pubAK,pubTIK,dev_status1,cmw_data);
+      event ClientRA2(pubAK,pubTIK,dev_status1);
+      event ClientRA3(pubAK,pubTIK,dev_status1,ID_C);
+      event ClientRAWithoutAK(pubTIK,dev_status1,cmw_data);    
+      event ClientRANew(NULL_ID,NULL_pubkey,pubAK,pubTIK,dev_status1,cmw_data);
       event ClientID(ID_S,gxy);
       (* insert clientSession(cr,sr,psk,offer,mode,kc,ks,ems,rms);  kc and ks are passed to appData via this table *)
       out(io,FIN(m2))  (* send ClientFinished message *)
@@ -1934,7 +1934,7 @@ let Client(ID_C:identity,ID_S:identity,pubEK:pubkey,pubAK:pubkey,pubCA:pubkey) =
 (* Server                                               *)
 (********************************************************)
 
-let Server(ID_S:identity, privAK: privkey, privEK: privkey, ID_C:identity, server_cert:bitstring) =
+let Server(ID_S:identity, privAK: privkey, privTIK: privkey, ID_C:identity, server_cert:bitstring) =
 (
   in(io, ch:msg); (* Receive ClientHello message from Client and store in variable ch *)
   let ClientHello(cr,offer) = ch in (* pattern matching; ar retained for CH type compat, unused by Early Attestation *)
@@ -1965,7 +1965,7 @@ let Server(ID_S:identity, privAK: privkey, privEK: privkey, ID_C:identity, serve
     let gxy = e2b(dh_exp(g,gx,y)) in  (* represents (EC)DHE in Key Derivation [Sec. 7.1, RFC8446] *)
     let (hs:bitstring,kch:ae_key,ksh:ae_key,kcm:mac_key,ksm:mac_key) = kdf_hs(es,gxy,log_SH) in
 
-    let pubEK = pk(privEK) in
+    let pubTIK = pk(privTIK) in
     let pubAK = pk(privAK) in
     event ServerID(ID_S,gxy);
 
@@ -1975,7 +1975,7 @@ let Server(ID_S:identity, privAK: privkey, privEK: privkey, ID_C:identity, serve
        Binder is passed to TEE as the nonce input; TEE signs it into Evidence.
        Per §5.2: Evidence MUST include EK public key hash to bind EK to TEE. *)
     let s_attest_base = derive_secret(zero, s_attest_base_label, log_EE) in
-    let s_attest_binder = hkdf_expand_label(s_attest_base, attest_label, p2b(pubEK)) in
+    let s_attest_binder = hkdf_expand_label(s_attest_base, attest_label, p2b(pubTIK)) in
     let rdata = s_attest_binder in
 
 (*** Attesting Environment Boundary ***)
@@ -1987,17 +1987,17 @@ let Server(ID_S:identity, privAK: privkey, privEK: privkey, ID_C:identity, serve
     let cmw_data = quote in
     event Conveyed(log_SH);
     event Sent(cmw_data);
-    event SentWithPubEK(cmw_data,pubEK);
+    event SentWithPubTIK(cmw_data,pubTIK);
     event SentRdata(dev_status1);
-    event ServerRA(ID_S,pubEK,pubAK,pubEK,dev_status1,cmw_data);  
-    event ServerRA2(pubAK,pubEK,dev_status1);
-    event ServerRAWithoutAK(pubEK,dev_status1,cmw_data);
+    event ServerRA(ID_S,pubTIK,pubAK,pubTIK,dev_status1,cmw_data);  
+    event ServerRA2(pubAK,pubTIK,dev_status1);
+    event ServerRAWithoutAK(pubTIK,dev_status1,cmw_data);
 
-    out(io,Cert(pubEK,server_cert,cmw_data));  (* Send Certificate message *)
-    let log_CRT = (log_EE,Cert(pubEK,server_cert,cmw_data)) in  (* ... || sent Certificate *)
+    out(io,Cert(pubTIK,server_cert,cmw_data));  (* Send Certificate message *)
+    let log_CRT = (log_EE,Cert(pubTIK,server_cert,cmw_data)) in  (* ... || sent Certificate *)
 
     (* CertificateVerify message *)
-    let sg = sign(privEK,hash(hash_algo,log_CRT)) in  (* A signature over the value Transcript-Hash(Handshake Context, Certificate) [Sec. 4.4, RFC8446] *)
+    let sg = sign(privTIK,hash(hash_algo,log_CRT)) in  (* A signature over the value Transcript-Hash(Handshake Context, Certificate) [Sec. 4.4, RFC8446] *)
     out(io,CV(sg));  (* Send CertificateVerify message *)
     let log_CV = (log_CRT,CV(sg)) in  (* ... || sent CertificateVerify *)
 
@@ -2005,16 +2005,16 @@ let Server(ID_S:identity, privAK: privkey, privEK: privkey, ID_C:identity, serve
     let m1 = hmac(StrongHash,ksm,log_CV) in  (* A MAC over the value Transcript-Hash(Handshake Context, Certificate, CertificateVerify) using a MAC key derived from the Base Key [Sec. 4.4, RFC8446] *)
     let log_SFIN = (log_CV,FIN(m1)) in  (* ... || sent ServerFinished *)
     let (ms:bitstring,kc:ae_key,ks:ae_key,ems:bitstring) = kdf_ms(hs,log_SFIN) in  (* Key Derivation [Sec. 7.1, RFC8446] *)
-    event PreServerFinished(pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems);
+    event PreServerFinished(pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems);
     event PreServerFinishedAliveness(ID_S, pubAK);
     event PreServerFinishedWeakAgr(ID_S,ID_C);
-    event PreServerFin1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems);
-    event PreServerFinRecent1WayAgr(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr);  
-    event PreServerFinAgr(ID_S,ID_C,pubEK,psk,offer,mode,kc,ks,ems);
-    event PreServerFinRecentAgr(ID_S,ID_C,pubEK,psk,offer,mode,kc,ks,ems,cr,sr);
-    event PreServerFinishedWithID(ID_S,pubEK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems);
-    event PreServerFinishedWithBothPub(pubAK,psk,pubEK,cr,sr,offer,mode,kc,ks,ems);
-    event PreServerComp(ID_S,pubEK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubEK,dev_status1);  
+    event PreServerFin1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems);
+    event PreServerFinRecent1WayAgr(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr);  
+    event PreServerFinAgr(ID_S,ID_C,pubTIK,psk,offer,mode,kc,ks,ems);
+    event PreServerFinRecentAgr(ID_S,ID_C,pubTIK,psk,offer,mode,kc,ks,ems,cr,sr);
+    event PreServerFinishedWithID(ID_S,pubTIK,pubAK,psk,cr,sr,offer,mode,kc,ks,ems);
+    event PreServerFinishedWithBothPub(pubAK,psk,pubTIK,cr,sr,offer,mode,kc,ks,ems);
+    event PreServerComp(ID_S,pubTIK,pubAK,psk,offer,mode,kc,ks,ems,cr,sr,pubTIK,dev_status1);  
     out(io,FIN(m1));  (* Send serverFinished message *)
 
     (* clientFinished message *)
@@ -2022,7 +2022,7 @@ let Server(ID_S:identity, privAK: privkey, privEK: privkey, ID_C:identity, serve
     if m2 = hmac(StrongHash,kcm,log_SFIN) then  (* kcm represents kcm; check mac of finished from client *)
       let log_CFIN = (log_SFIN,FIN(m2)) in  (* ... || received ClientFinished *)
     let rms =  kdf_psk(ms,log_CFIN) in
-    event ServerFinished(cr,sr,psk,pubEK,offer,mode,kc,ks,ems,rms)
+    event ServerFinished(cr,sr,psk,pubTIK,offer,mode,kc,ks,ems,rms)
     (* insert serverSession(cr,sr,psk,offer,mode,kc,ks,ems,rms);  kc and ks are passed to appData via this table *)
   )
 ).

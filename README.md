@@ -1,10 +1,17 @@
+<div align="center">
+
 # Identity Crisis in Confidential Computing: Formal analysis of attested TLS protocols
+
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+
+</div>
 
 This repo contains the artifacts for formal specification and analysis of the following two candidates for standardization for attested TLS protocols:
 - [Interoperable RA-TLS protocol](https://github.com/ccc-attestation/interoperable-ra-tls) (pre-handshake attestation)
 - TLS-attest protocol (intra-handshake attestation): [spec](https://datatracker.ietf.org/doc/draft-fossati-tls-attestation/09/) and [CCC project implementation](https://github.com/ccc-attestation/attested-tls-poc)
 
-We provide a formal proof of insecurity of both protocols using state-of-the-art tool [ProVerif](https://ieeexplore.ieee.org/document/9833653) and propose some potential solutions for discovered security vulnerabilities.
+> [!NOTE]
+> We provide a formal proof of insecurity of both protocols using state-of-the-art tool [ProVerif](https://ieeexplore.ieee.org/document/9833653) and propose some potential solutions for discovered security vulnerabilities.
 
 
 ## Main results
@@ -54,6 +61,19 @@ year = {2026}
 }
 ```
 
+For Internet-Drafts:
+```
+  ID-Crisis:
+    title: "Identity Crisis in Confidential Computing: Formal Analysis of Attested TLS"
+    date: November 2025,
+    target: https://www.researchgate.net/publication/398839141_Identity_Crisis_in_Confidential_Computing_Formal_Analysis_of_Attested_TLS
+    author:
+      - ins: M. U. Sardar
+      - ins: M. Moustafa
+      - ins: T. Aura
+```
+
+and then use as ``{{ID-Crisis}}``
 
 ## Acknowledgments
 Ionut Mihalcea contributed significantly to the discussions for the formalization. We also gratefully acknowledge the following for insightful discussions on this work:
@@ -80,10 +100,14 @@ See Section 1.4 of [manual](https://bblanche.gitlabpages.inria.fr/proverif/manua
 - from binaries: Section 1.4.3 
 
 ## Artifacts organization
+<details>
+<summary>Click to expand folder details</summary>
+
 - Folder `IRA-TLS` contains code for original Interoperable RA-TLS protocol.
 - Folder `IRA-TLS/fix` contains code for our proposed fix for Interoperable RA-TLS protocol.
 - Folder `TLS-a` contains code for original TLS-attest standard candidate.
 - Folder `TLS-a/fix` contains code for our proposed fix for TLS-attest standard candidate.
+</details>
 
 The name of files within each folder are the same. So the following [commands](https://github.com/CCC-Attestation/formal-spec-id-crisis?tab=readme-ov-file#running-automatic-proofs) can be used to run any of those.
 
@@ -173,10 +197,6 @@ If you are around on any of the following venues of upcoming talks (in reverse c
 | Event/Host | Venue | Date(s) | Funding | Material |
 | --- | --- | --- | --- | --- |
 | [AsiaCCS 2026](https://asiaccs2026.cse.iitkgp.ac.in/) | Bangalore, India | 1-5 June, 2026 |  | slides, video |
-| [IETF 125](https://www.ietf.org/meeting/125/) | Shenzhen, China | 16-20 Mar, 2026 | Sponsors are invited |   |
-| [IETF 125 Hackathon](https://www.ietf.org/meeting/hackathons/125-hackathon/) | Shenzhen, China | 14-15 Mar, 2026 | Sponsors are invited |  |
-| [Confidential Computing](https://fosdem.org/2026/schedule/track/confidential-computing/) devroom at [FOSDEM  2026](https://fosdem.org/2026/) | Brussels, Belgium | 31 Jan-1 Feb, 2026 | Sponsors are invited | [abstract](https://fosdem.org/2026/schedule/event/GHGFBM-attestedtls/), slides, video |
-| IETF SEAT WG [Interim meeting](https://meetings.conf.meetecho.com/interim/?session=35089) | Virtual | 23 Jan 2026 | - | slides; video |
 | [CyberFunk Fellowship](https://cypherpunk.camp/#fellowship) CF Cohort Meeting #3 (co-present with Peg Jones) | Virtual | 8 Jan, 2025 | - | slides |
 | Data Security Work Stream (DSWS) at [The Global Alliance for Genomics and Health (GA4GH)](https://www.ga4gh.org/) | Virtual | 22 Dec, 2025 | - | [slides](https://drive.google.com/file/d/1w1UtdmtpYwIR3h_8Py5ZTnuIUU92tNj8/view); [video](https://us02web.zoom.us/rec/share/aGzeZsiCji1bG-vv3HELNWt-XD8ZJAR3eYMteYDp-319hJspUxOGisse2Lbd7CN5.8axfRbByp-O5rl29?startTime=1766433391000) |
 | CCC Attestation SIG | Virtual | 16 Dec, 2025 | - | [slides](https://github.com/CCC-Attestation/meetings/blob/main/materials/MuhammadUsamaSardar_Binding_Properties_20251216.pdf); [video](https://youtu.be/w_MrjMeHyP8?list=PLmfkUJc39uMhZsNGmpx-qD-uCoQyMglIp&t=593) |

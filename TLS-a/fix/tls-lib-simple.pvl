@@ -1017,7 +1017,7 @@ query cr:random, sr:random, cr':random, sr':random,
 (* For mutual authentication only *)
 (*
 Weak agreement
-Result: true
+Result: false
 Client authentication:
   Client identity (ID_C) match does not necessarily imply client authentication. 
   Server knows which set of clients it wants to communicate with 
@@ -1045,7 +1045,7 @@ query cr:random, sr:random, cr':random, sr':random,
 (*
 Non-injective agreement
 ds = pubLTK,psk,offer,mode,kc,ks,ems,rms
-Result: true
+Result: false
 *)
 query cr:random, sr:random, cr':random, sr':random,
       ID_S:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,
@@ -1065,7 +1065,7 @@ query cr:random, sr:random, cr':random, sr':random,
 Injective agreement
 ds = pubLTK,psk,offer,mode,kc,ks,ems,rms
 Replace event by inj-event in non-injective agreement
-Result: true
+Result: false
 *)
 query cr:random, sr:random, cr':random, sr':random,
       ID_S:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,
@@ -1084,7 +1084,7 @@ query cr:random, sr:random, cr':random, sr':random,
 (*
 Recent injective agreement
 ds = pubLTK,psk,offer,mode,kc,ks,ems,rms,cr,sr
-Result: true
+Result: false
 *)
 query cr:random, sr:random, cr':random, sr':random,
       ID_S:identity,pubLTK:pubkey,pubAK:pubkey,pubEK:pubkey,

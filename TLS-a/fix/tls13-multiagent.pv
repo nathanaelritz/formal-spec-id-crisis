@@ -44,7 +44,8 @@ let gen_agents_data (privCA:privkey) =
 	let pubAK = pk(privAK) in
 	out(io,pubAK);  
 
-  let server_cert = sign(privCA,(ID_S,pubLTK)) in   (* WebPKI cert = {ID_S,pubLTK_S}CA *)
+  let CA_sig = sign(privCA,(ID_S,pubLTK)) in   
+  let server_cert = ((ID_S,pubLTK),CA_sig) in  (* PKI cert = {ID_S,pubLTK_S}CA *) 
   out(io, server_cert);
   insert trust_store(ID_S,pubLTK,server_cert);
 

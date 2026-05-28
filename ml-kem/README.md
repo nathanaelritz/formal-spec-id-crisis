@@ -1,6 +1,6 @@
 # Formal Analysis: TLS + RA + ML-KEM
 
-This repository contains the ProVerif formal verification models and query results comparing the baseline **Cocos AI** intra-handshake attestation implementation against a mitigated design based loosely on the `Early Attestation` draft using pure ML-KEM in place of DHKE.
+This repository contains the ProVerif formal verification models and query results evaluating intra-handshake attestation implementation with a binder design based loosely on the `Early Attestation` draft using pure ML-KEM in place of DHKE.
 
 
 ## Running the Models

@@ -82,6 +82,17 @@ query log: bitstring,
      || event(LeakedAK(pubAK))
      || event(LeakedEK(pubEK)).
 
+
+(* B3 injective + all escapes variant — EXPECTED TRUE *)
+query log: bitstring,
+      pubAK: pubkey, pubEK: pubkey,
+      cr': random, sr': random;
+    inj-event(Appraised(log))
+    ==> inj-event(Conveyed(log))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
+
 (* B4 injective + LeakedEK only — EXPECTED FALSE
 *)
 query log: bitstring,
@@ -95,6 +106,16 @@ query log: bitstring,
      || event(SentBadElement)
      || event(LeakedEK(pubEK)).
 
+
+(* B4 injective + LeakedEK only variant — EXPECTED FALSE *)
+query log: bitstring,
+      pubEK: pubkey,
+      cr': random, sr': random;
+    inj-event(Appraised(log))
+    ==> inj-event(Conveyed(log))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedEK(pubEK)).
+
 (* B5 injective + LeakedAK only — EXPECTED FALSE
 *)
 query log: bitstring,
@@ -106,6 +127,16 @@ query log: bitstring,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedAK(pubAK)).
+
+
+(* B5 injective + LeakedAK only variant — EXPECTED FALSE *)
+query log: bitstring,
+      pubAK: pubkey,
+      cr': random, sr': random;
+    inj-event(Appraised(log))
+    ==> inj-event(Conveyed(log))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedAK(pubAK)).
 
 (* B6 non-injective bare, Level 3 — EXPECTED FALSE
@@ -129,6 +160,16 @@ query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement).
 
+
+(* B7 injective + weak-crypto escapes only, Level 3 variant — EXPECTED FALSE *)
+query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr': random, sr': random;
+    inj-event(ClientFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems, rms))
+    ==> inj-event(PreServerFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems))
+     || event(ServerChoosesHash(cr', sr', WeakHash)).
+
 (* B8 injective + LeakedEK only, Level 3 — EXPECTED FALSE
 *)
 query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
@@ -141,6 +182,17 @@ query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedEK(pubEK)).
+
+
+(* B8 injective + LeakedEK only, Level 3 variant — EXPECTED FALSE *)
+query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr': random, sr': random;
+    inj-event(ClientFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems, rms))
+    ==> inj-event(PreServerFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedEK(pubEK)).
 
 (* B9 injective + LeakedAK only, Level 3 — EXPECTED FALSE
@@ -158,6 +210,18 @@ query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
      || event(SentBadElement)
      || event(LeakedAK(pubAK)).
 
+
+(* B9 injective + LeakedAK only, Level 3 variant — EXPECTED FALSE *)
+query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      pubAK: pubkey,
+      cr': random, sr': random;
+    inj-event(ClientFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems, rms))
+    ==> inj-event(PreServerFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedAK(pubAK)).
+
 (* B10 injective + both, Level 3 — EXPECTED TRUE *)
 query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
       offer: params, mode: params,
@@ -170,6 +234,19 @@ query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
+
+
+(* B10 injective + both, Level 3 variant — EXPECTED FALSE *)
+query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      pubAK: pubkey,
+      cr': random, sr': random;
+    inj-event(ClientFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems, rms))
+    ==> inj-event(PreServerFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedAK(pubAK))
      || event(LeakedEK(pubEK)).
 
@@ -196,6 +273,21 @@ query ID: identity, pubLTK: pubkey, pubAK: pubkey, pubEK: pubkey,
    All nine queries are EXPECTED FALSE against this protocol.
   ================================================================== *)
 
+
+(* B11 injective + both + full identity, Level 3 variant — EXPECTED FALSE *)
+query ID: identity, pubLTK: pubkey, pubAK: pubkey, pubEK: pubkey,
+      psk: preSharedKey, cr: random, sr: random,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr': random, sr': random;
+    inj-event(ClientFinishedWithID(ID, pubLTK, pubAK, psk, cr, sr,
+                                   offer, mode, kc, ks, ems, rms))
+    ==> inj-event(PreServerFinishedWithID(ID, pubLTK, pubAK, psk, cr, sr,
+                                          offer, mode, kc, ks, ems))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
+
 (* C1.1 — EXPECTED FALSE
 *)
 query ID_S: identity, pubLTK: pubkey, pubAK: pubkey, pubEK: pubkey,
@@ -217,6 +309,17 @@ query ID_S: identity, pubLTK: pubkey, pubAK: pubkey, pubEK: pubkey,
      || event(SentBadElement)
      || event(LeakedAK(pubAK)).
 
+
+(* C1.2 variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, pubAK: pubkey, pubEK: pubkey,
+      psk: preSharedKey, cr: random, sr: random, offer: params, mode: params,
+      kch: ae_key, ksh: ae_key, dev_state: bitstring, quote: bitstring,
+      cr': random, sr': random;
+    inj-event(ClientAppraisedQuote(ID_S, pubLTK, pubAK, pubEK, psk, cr, sr, offer, mode, kch, ksh, dev_state, quote))
+    ==> inj-event(ServerSentQuote(ID_S, pubLTK, pubAK, pubEK, psk, cr, sr, offer, mode, kch, ksh, dev_state, quote))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedAK(pubAK)).
+
 (* C1.3 — EXPECTED FALSE
 *)
 query ID_S: identity, pubLTK: pubkey, pubAK: pubkey, pubEK: pubkey,
@@ -228,6 +331,18 @@ query ID_S: identity, pubLTK: pubkey, pubAK: pubkey, pubEK: pubkey,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedLTK(pubLTK))
+     || event(LeakedEK(pubEK)).
+
+
+(* C1.3 variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, pubAK: pubkey, pubEK: pubkey,
+      psk: preSharedKey, cr: random, sr: random, offer: params, mode: params,
+      kch: ae_key, ksh: ae_key, dev_state: bitstring, quote: bitstring,
+      cr': random, sr': random;
+    inj-event(ClientAppraisedQuote(ID_S, pubLTK, pubAK, pubEK, psk, cr, sr, offer, mode, kch, ksh, dev_state, quote))
+    ==> inj-event(ServerSentQuote(ID_S, pubLTK, pubAK, pubEK, psk, cr, sr, offer, mode, kch, ksh, dev_state, quote))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedLTK(pubLTK))
      || event(LeakedEK(pubEK)).
 
@@ -249,6 +364,16 @@ query ID_S: identity, pubLTK: pubkey, pubAK: pubkey, psk: preSharedKey, offer: p
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl))) || event(ServerChoosesHash(cr', sr', WeakHash)) || event(SentBadElement)
      || event(LeakedAK(pubAK)).
 
+
+(* C2.2 variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, pubAK: pubkey, psk: preSharedKey, offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring, cr: random, sr: random,
+      pubEK: pubkey, dev_state: bitstring, cr': random, sr': random;
+    inj-event(ClientComp(ID_S, pubLTK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubEK, dev_state))
+    ==> inj-event(PreServerComp(ID_S, pubLTK, psk, offer, mode, kc, ks, ems, cr, sr, pubEK, dev_state))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedAK(pubAK)).
+
 (* C2.3 — EXPECTED FALSE
 *)
 query ID_S: identity, pubLTK: pubkey, psk: preSharedKey, offer: params, mode: params,
@@ -257,6 +382,17 @@ query ID_S: identity, pubLTK: pubkey, psk: preSharedKey, offer: params, mode: pa
     inj-event(ClientComp(ID_S, pubLTK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubEK, dev_state))
     ==> inj-event(PreServerComp(ID_S, pubLTK, psk, offer, mode, kc, ks, ems, cr, sr, pubEK, dev_state))
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl))) || event(ServerChoosesHash(cr', sr', WeakHash)) || event(SentBadElement)
+     || event(LeakedLTK(pubLTK))
+     || event(LeakedEK(pubEK)).
+
+
+(* C2.3 variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, psk: preSharedKey, offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring, cr: random, sr: random,
+      pubEK: pubkey, dev_state: bitstring, cr': random, sr': random;
+    inj-event(ClientComp(ID_S, pubLTK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubEK, dev_state))
+    ==> inj-event(PreServerComp(ID_S, pubLTK, psk, offer, mode, kc, ks, ems, cr, sr, pubEK, dev_state))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedLTK(pubLTK))
      || event(LeakedEK(pubEK)).
 
@@ -278,6 +414,16 @@ query ID_S: identity, pubEK: pubkey, pubAK: pubkey, pubLTK: pubkey, psk: preShar
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl))) || event(ServerChoosesHash(cr', sr', WeakHash)) || event(SentBadElement)
      || event(LeakedAK(pubAK)).
 
+
+(* C3.2 variant — EXPECTED FALSE *)
+query ID_S: identity, pubEK: pubkey, pubAK: pubkey, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params, kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr: random, sr: random, dev_state: bitstring, app_data: bitstring, cr': random, sr': random;
+    event(ClientReceivesAppData(ID_S, pubEK, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubLTK, dev_state, app_data))
+    ==> event(ServerSendsAppData(ID_S, pubEK, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubLTK, dev_state, app_data))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedAK(pubAK)).
+
 (* C3.3 — EXPECTED FALSE
 *)
 query ID_S: identity, pubEK: pubkey, pubAK: pubkey, pubLTK: pubkey, psk: preSharedKey,
@@ -293,6 +439,17 @@ query ID_S: identity, pubEK: pubkey, pubAK: pubkey, pubLTK: pubkey, psk: preShar
 (* PART D: ONE-WAY AGREEMENT BASELINE                                 *)
 (* ================================================================== *)
 
+
+(* C3.3 variant — EXPECTED FALSE *)
+query ID_S: identity, pubEK: pubkey, pubAK: pubkey, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params, kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr: random, sr: random, dev_state: bitstring, app_data: bitstring, cr': random, sr': random;
+    event(ClientReceivesAppData(ID_S, pubEK, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubLTK, dev_state, app_data))
+    ==> event(ServerSendsAppData(ID_S, pubEK, pubAK, psk, offer, mode, kc, ks, ems, rms, cr, sr, pubLTK, dev_state, app_data))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedLTK(pubLTK))
+     || event(LeakedEK(pubEK)).
+
 (* D1 — EXPECTED TRUE *)
 query ID_S: identity, pubAK: pubkey, pubEK: pubkey,
       badEl: element,
@@ -302,6 +459,16 @@ query ID_S: identity, pubAK: pubkey, pubEK: pubkey,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
+
+
+(* D1 variant — EXPECTED FALSE *)
+query ID_S: identity, pubAK: pubkey, pubEK: pubkey,
+      cr': random, sr': random;
+    event(ClientFinishedAliveness(ID_S))
+    ==> event(PreServerFinishedAliveness(ID_S))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedAK(pubAK))
      || event(LeakedEK(pubEK)).
 
@@ -320,6 +487,19 @@ query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
      || event(LeakedAK(pubAK))
      || event(LeakedEK(pubEK)).
 
+
+(* D2 non-injective variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      pubAK: pubkey, pubEK: pubkey,
+      cr': random, sr': random;
+    event(ClientFin1WayAgr(ID_S, pubLTK, psk, offer, mode, kc, ks, ems, rms))
+    ==> event(PreServerFin1WayAgr(ID_S, pubLTK, psk, offer, mode, kc, ks, ems))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
+
 (* D3 injective — EXPECTED TRUE *)
 query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
       offer: params, mode: params,
@@ -332,6 +512,19 @@ query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
+
+
+(* D3 injective variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      pubAK: pubkey, pubEK: pubkey,
+      cr': random, sr': random;
+    inj-event(ClientFin1WayAgr(ID_S, pubLTK, psk, offer, mode, kc, ks, ems, rms))
+    ==> inj-event(PreServerFin1WayAgr(ID_S, pubLTK, psk, offer, mode, kc, ks, ems))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedAK(pubAK))
      || event(LeakedEK(pubEK)).
 
@@ -357,6 +550,22 @@ query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
 (* PART E: PROGRESSIVE COMPOSITION BINDING ANALYSIS                    *)
 (* ClientComp and PreServerComp carry parameters from both RA and TLS. *)
 (* ==================================================================  *)
+
+
+(* D4 injective with nonces variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr: random, sr: random,
+      pubAK: pubkey, pubEK: pubkey,
+      cr': random, sr': random;
+    inj-event(ClientFinRecent1WayAgr(ID_S, pubLTK, psk, offer, mode,
+                                     kc, ks, ems, rms, cr, sr))
+    ==> inj-event(PreServerFinRecent1WayAgr(ID_S, pubLTK, psk, offer, mode,
+                                            kc, ks, ems, cr, sr))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
 
 (* E1 bare — EXPECTED FALSE *)
 query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
@@ -391,6 +600,22 @@ query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
 (* PART F: LTK assumption ANALYSIS                                  *)
 (* ================================================================== *)
 
+
+(* E2 injective + both variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr: random, sr: random, pubEK: pubkey, dev_state: bitstring,
+      pubAK: pubkey,
+      cr': random, sr': random;
+    inj-event(ClientComp(ID_S, pubLTK, psk, offer, mode,
+                         kc, ks, ems, rms, cr, sr, pubEK, dev_state))
+    ==> inj-event(PreServerComp(ID_S, pubLTK, psk, offer, mode,
+                                kc, ks, ems, cr, sr, pubEK, dev_state))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
+
 (* F1: LeakedLTK alone at Level 2 — EXPECTED FALSE
 *)
 query log: bitstring,
@@ -404,6 +629,16 @@ query log: bitstring,
      || event(SentBadElement)
      || event(LeakedLTK(pubLTK)).
 
+
+(* F1: LeakedLTK alone at Level 2 variant — EXPECTED FALSE *)
+query log: bitstring,
+      pubLTK: pubkey,
+      cr': random, sr': random;
+    inj-event(Appraised(log))
+    ==> inj-event(Conveyed(log))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedLTK(pubLTK)).
+
 (* F2: LeakedLTK + LeakedAK at Level 2 — EXPECTED FALSE
 *)
 query log: bitstring,
@@ -415,6 +650,17 @@ query log: bitstring,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedLTK(pubLTK))
+     || event(LeakedAK(pubAK)).
+
+
+(* F2: LeakedLTK + LeakedAK at Level 2 variant — EXPECTED FALSE *)
+query log: bitstring,
+      pubLTK: pubkey, pubAK: pubkey,
+      cr': random, sr': random;
+    inj-event(Appraised(log))
+    ==> inj-event(Conveyed(log))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedLTK(pubLTK))
      || event(LeakedAK(pubAK)).
 
@@ -432,6 +678,17 @@ query log: bitstring,
      || event(LeakedLTK(pubLTK))
      || event(LeakedEK(pubEK)).
 
+
+(* F3: LeakedLTK + LeakedEK at Level 2 variant — EXPECTED FALSE *)
+query log: bitstring,
+      pubLTK: pubkey, pubEK: pubkey,
+      cr': random, sr': random;
+    inj-event(Appraised(log))
+    ==> inj-event(Conveyed(log))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedLTK(pubLTK))
+     || event(LeakedEK(pubEK)).
+
 (* F4: LeakedLTK + LeakedAK + LeakedEK at Level 2 — EXPECTED TRUE
 *)
 query log: bitstring,
@@ -443,6 +700,18 @@ query log: bitstring,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedLTK(pubLTK))
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
+
+
+(* F4: LeakedLTK + LeakedAK + LeakedEK at Level 2 variant — EXPECTED TRUE *)
+query log: bitstring,
+      pubLTK: pubkey, pubAK: pubkey, pubEK: pubkey,
+      cr': random, sr': random;
+    inj-event(Appraised(log))
+    ==> inj-event(Conveyed(log))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedLTK(pubLTK))
      || event(LeakedAK(pubAK))
      || event(LeakedEK(pubEK)).
@@ -463,6 +732,18 @@ query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
      || event(LeakedLTK(pubLTK)).
 
 (* ------------------------------------------------------------------ *)
+
+(* F5: LeakedLTK alone at Level 3 (ClientFinished / atsc) variant — EXPECTED FALSE *)
+query pubEK: pubkey, psk: preSharedKey, cr: random, sr: random,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      pubLTK: pubkey,
+      cr': random, sr': random;
+    inj-event(ClientFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems, rms))
+    ==> inj-event(PreServerFinished(pubEK, psk, cr, sr, offer, mode, kc, ks, ems))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedLTK(pubLTK)).
+
 (* G1-G10: LTK at the composition layer (ClientComp / PreServerComp)  *)
 (* ------------------------------------------------------------------ *)
 
@@ -480,6 +761,20 @@ query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedLTK(pubLTK)).
+
+
+(* G1: LeakedLTK alone at composition variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr: random, sr: random, pubEK: pubkey, dev_state: bitstring,
+      cr': random, sr': random;
+    inj-event(ClientComp(ID_S, pubLTK, psk, offer, mode,
+                         kc, ks, ems, rms, cr, sr, pubEK, dev_state))
+    ==> inj-event(PreServerComp(ID_S, pubLTK, psk, offer, mode,
+                                kc, ks, ems, cr, sr, pubEK, dev_state))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedLTK(pubLTK)).
 
 (* G2: LeakedLTK + LeakedAK at composition — EXPECTED FALSE
@@ -501,6 +796,22 @@ query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
      || event(LeakedLTK(pubLTK))
      || event(LeakedAK(pubAK)).
 
+
+(* G2: LeakedLTK + LeakedAK at composition variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr: random, sr: random, pubEK: pubkey, dev_state: bitstring,
+      pubAK: pubkey,
+      cr': random, sr': random;
+    inj-event(ClientComp(ID_S, pubLTK, psk, offer, mode,
+                         kc, ks, ems, rms, cr, sr, pubEK, dev_state))
+    ==> inj-event(PreServerComp(ID_S, pubLTK, psk, offer, mode,
+                                kc, ks, ems, cr, sr, pubEK, dev_state))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedLTK(pubLTK))
+     || event(LeakedAK(pubAK)).
+
 (* G3: LeakedLTK + LeakedEK at composition — EXPECTED FALSE
 *)
 query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
@@ -516,6 +827,21 @@ query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
      || event(ServerChoosesKEX(cr', sr', DHE_13(WeakDH, badEl)))
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
+     || event(LeakedLTK(pubLTK))
+     || event(LeakedEK(pubEK)).
+
+
+(* G3: LeakedLTK + LeakedEK at composition variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr: random, sr: random, pubEK: pubkey, dev_state: bitstring,
+      cr': random, sr': random;
+    inj-event(ClientComp(ID_S, pubLTK, psk, offer, mode,
+                         kc, ks, ems, rms, cr, sr, pubEK, dev_state))
+    ==> inj-event(PreServerComp(ID_S, pubLTK, psk, offer, mode,
+                                kc, ks, ems, cr, sr, pubEK, dev_state))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(LeakedLTK(pubLTK))
      || event(LeakedEK(pubEK)).
 
@@ -539,6 +865,23 @@ query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
      || event(LeakedAK(pubAK))
      || event(LeakedEK(pubEK)).
 
+
+(* G4: LeakedLTK + LeakedAK + LeakedEK at composition variant — EXPECTED FALSE *)
+query ID_S: identity, pubLTK: pubkey, psk: preSharedKey,
+      offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr: random, sr: random, pubEK: pubkey, dev_state: bitstring,
+      pubAK: pubkey,
+      cr': random, sr': random;
+    inj-event(ClientComp(ID_S, pubLTK, psk, offer, mode,
+                         kc, ks, ems, rms, cr, sr, pubEK, dev_state))
+    ==> inj-event(PreServerComp(ID_S, pubLTK, psk, offer, mode,
+                                kc, ks, ems, cr, sr, pubEK, dev_state))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedLTK(pubLTK))
+     || event(LeakedAK(pubAK))
+     || event(LeakedEK(pubEK)).
+
 (* G5: LeakedLTK alone at end-to-end — EXPECTED FALSE
 *)
 query ID_S: identity, pubEK: pubkey, pubAK: pubkey,
@@ -558,3 +901,20 @@ query ID_S: identity, pubEK: pubkey, pubAK: pubkey,
      || event(ServerChoosesHash(cr', sr', WeakHash))
      || event(SentBadElement)
      || event(LeakedLTK(pubLTK)).
+
+(* G5: LeakedLTK alone at end-to-end variant — EXPECTED FALSE *)
+query ID_S: identity, pubEK: pubkey, pubAK: pubkey,
+      psk: preSharedKey, offer: params, mode: params,
+      kc: ae_key, ks: ae_key, ems: bitstring, rms: bitstring,
+      cr: random, sr: random, pubLTK: pubkey,
+      dev_state: bitstring, app_data: bitstring,
+      cr': random, sr': random;
+    event(ClientReceivesAppData(ID_S, pubEK, pubAK, psk, offer, mode,
+                                kc, ks, ems, rms, cr, sr, pubLTK,
+                                dev_state, app_data))
+    ==> event(ServerSendsAppData(ID_S, pubEK, pubAK, psk, offer, mode,
+                                 kc, ks, ems, rms, cr, sr, pubLTK,
+                                 dev_state, app_data))
+     || event(ServerChoosesHash(cr', sr', WeakHash))
+     || event(LeakedLTK(pubLTK)).
+

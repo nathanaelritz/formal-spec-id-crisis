@@ -125,70 +125,132 @@ Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) is false.
 
 Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
 
+Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
+
 Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedEK(pubEK_6)) is false.
 
+Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedEK(pubEK_6)) is false.
+
 Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) is false.
+
+Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) is false.
 
 Query event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) is false.
 
 Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) is false.
 
+Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesHash(cr',sr',WeakHash)) is false.
+
 Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedEK(pubEK_6)) is false.
+
+Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedEK(pubEK_6)) is false.
 
 Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) is false.
 
+Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) is false.
+
 Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
 
+Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is false.
+
 Query inj-event(ClientFinishedWithID(ID,pubLTK_6,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithID(ID,pubLTK_6,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
+
+Query inj-event(ClientFinishedWithID(ID,pubLTK_6,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinishedWithID(ID,pubLTK_6,pubAK_5,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is false.
 
 Query inj-event(ClientAppraisedQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) ==> inj-event(ServerSentQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) is false.
 
 Query inj-event(ClientAppraisedQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) ==> inj-event(ServerSentQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) is false.
 
+Query inj-event(ClientAppraisedQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) ==> inj-event(ServerSentQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) is false.
+
 Query inj-event(ClientAppraisedQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) ==> inj-event(ServerSentQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
+
+Query inj-event(ClientAppraisedQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) ==> inj-event(ServerSentQuote(ID_S_4,pubLTK_6,pubAK_5,pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kch_4,ksh_4,dev_state,quote_2)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
 
 Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) is false.
 
 Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) is false.
 
+Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) is false.
+
 Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
+
+Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
 
 Query event(ClientReceivesAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) ==> event(ServerSendsAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) is false.
 
 Query event(ClientReceivesAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) ==> event(ServerSendsAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) is false.
 
+Query event(ClientReceivesAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) ==> event(ServerSendsAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) is false.
+
 Query event(ClientReceivesAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) ==> event(ServerSendsAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
+
+Query event(ClientReceivesAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) ==> event(ServerSendsAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
 
 Query event(ClientFinishedAliveness(ID_S_4)) ==> event(PreServerFinishedAliveness(ID_S_4)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
 
+Query event(ClientFinishedAliveness(ID_S_4)) ==> event(PreServerFinishedAliveness(ID_S_4)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is false.
+
 Query event(ClientFin1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> event(PreServerFin1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
+
+Query event(ClientFin1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> event(PreServerFin1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is false.
 
 Query inj-event(ClientFin1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFin1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
 
+Query inj-event(ClientFin1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFin1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is false.
+
 Query inj-event(ClientFinRecent1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
+
+Query inj-event(ClientFinRecent1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2)) ==> inj-event(PreServerFinRecent1WayAgr(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is false.
 
 Query event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) is false.
 
 Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
 
+Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is false.
+
 Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) is false.
+
+Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) is false.
 
 Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) || event(LeakedAK(pubAK_5)) is false.
 
+Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) || event(LeakedAK(pubAK_5)) is false.
+
 Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
+
+Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
 
 Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
 
+
+Query inj-event(Appraised(log)) ==> inj-event(Conveyed(log)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
+
 Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) is false.
+
+Query inj-event(ClientFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2)) ==> inj-event(PreServerFinished(pubEK_6,psk_2,cr_2,sr_2,offer_2,mode_2,kc_4,ks_4,ems_4)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) is false.
 
 Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) is false.
 
+Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) is false.
+
 Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) || event(LeakedAK(pubAK_5)) is false.
+
+Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) || event(LeakedAK(pubAK_5)) is false.
 
 Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
 
+Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) || event(LeakedEK(pubEK_6)) is false.
+
 Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is true.
+
+Query inj-event(ClientComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubEK_6,dev_state)) ==> inj-event(PreServerComp(ID_S_4,pubLTK_6,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,cr_2,sr_2,pubEK_6,dev_state)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) || event(LeakedAK(pubAK_5)) || event(LeakedEK(pubEK_6)) is false.
 
 Query event(ClientReceivesAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) ==> event(ServerSendsAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) || event(ServerChoosesKEX(cr',sr',DHE_13(WeakDH,badEl))) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(SentBadElement) || event(LeakedLTK(pubLTK_6)) is false.
 
+Query event(ClientReceivesAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) ==> event(ServerSendsAppData(ID_S_4,pubEK_6,pubAK_5,psk_2,offer_2,mode_2,kc_4,ks_4,ems_4,rms_2,cr_2,sr_2,pubLTK_6,dev_state,app_data)) || event(ServerChoosesHash(cr',sr',WeakHash)) || event(LeakedLTK(pubLTK_6)) is false.
+
 --------------------------------------------------------------
+
+docker run --rm -v "$(pwd)":/work my-proverif -lib work/tls-lib-simple.pvl     0.22s user 0.32s system 0% cpu 27:51.28 total
+tee log-dhe-cve.txt  0.01s user 0.42s system 0% cpu 27:51.28 total
